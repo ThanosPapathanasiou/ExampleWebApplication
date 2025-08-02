@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
+        
+        <!-- Data access -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.7" />
+
+        <!-- Scheduling -->
+        <PackageReference Include="TickerQ" Version="2.4.0" />
+        <PackageReference Include="TickerQ.Dashboard" Version="2.4.0" />
+        <PackageReference Include="TickerQ.Utilities" Version="2.4.0" />
+        <PackageReference Include="TickerQ.EntityFrameworkCore" Version="2.4.0" />
+    </ItemGroup>
+
+</Project>

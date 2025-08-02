@@ -37,5 +37,9 @@
     <ItemGroup>
         <Compile Include="Program.fs" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\ExampleApp.Scheduler\ExampleApp.Scheduler.csproj" />
+    </ItemGroup>
 
 </Project>

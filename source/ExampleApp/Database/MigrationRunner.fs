@@ -3,8 +3,11 @@
 open System.Data
 open System.IO
 open System.Reflection
+open System.Runtime.CompilerServices
 open Dapper
 open ExampleApp.Database.ConnectionManager
+open Microsoft.AspNetCore.Builder
+open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 
 type LocationOfMigrationScripts = string
@@ -94,3 +97,9 @@ type MigrationRunner(
             logger.LogError(ex, $"Migration failed: {ex.Message}")
             raise ex
         
+type MigrationExtensions() =
+    [<Extension>]
+    static member PerformDatabaseMigrations (app: WebApplication) =
+        use scope = app.Services.CreateScope()
+        let migrationRunner = scope.ServiceProvider.GetRequiredService<MigrationRunner>()
+        migrationRunner.RunMigration()
