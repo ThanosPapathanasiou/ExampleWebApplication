@@ -8,32 +8,28 @@ open ExampleApp.Website.Base
 
 let view: XmlNode =
     main [] [
-        section [ _class "section" ] [
-            h1 [ _class "title" ] [ Text "Contact Me" ]
+        section [ _class Bulma.section ] [
+            h1 [ _class Bulma.title ] [ Text "Contact Me" ]
             form [] [
-                div [ _class "field" ] [
-                    label [ _class "label" ] [ Text "Name" ]
-                    div [ _class "control" ] [
-                        input [
-                            _class "input"
-                            _type "text"
-                            _placeholder "Enter your name"
-                        ]
+                div [ _class Bulma.field ] [
+                    label [ _class Bulma.label ] [ Text "Name" ]
+                    div [ _class Bulma.control ] [
+                        input [ _class Bulma.input ; _type "text" ; _placeholder "Enter your name" ]
                     ]
                 ]
                 
-                div [ _class "field" ] [
-                    label [ _class "label" ] [ Text "Email" ]
-                    div [ _class "control has-icons-left has-icons-right" ] [
+                div [ _class Bulma.field ] [
+                    label [ _class Bulma.label ] [ Text "Email" ]
+                    div [ _classes [ Bulma.control; Bulma.``has-icons-left``; Bulma.``has-icons-right``] ] [
                         input [
-                            _class "input is-success"
+                            _classes [ Bulma.input; Bulma.``is-success`` ]
                             _type "text"
                             _placeholder "Enter your email"
                         ]
-                        span [ _class "icon is-small is-left" ] [
+                        span [ _classes [ Bulma.icon; Bulma.``is-small``; Bulma.``is-left`` ] ] [
                             i [ _class "fas fa-user" ] [] 
                         ]
-                        span [ _class "icon is-small is-right" ] [
+                        span [ _classes [ Bulma.icon; Bulma.``is-small``; Bulma.``is-left`` ] ] [
                             i [ _class "fas fa-check" ] [] 
                         ]
                         

@@ -8,9 +8,9 @@ open ExampleApp.Website.Htmx
 
 let view: XmlNode =
     main [] [
-        section [ _class "hero" ] [
-            div [ _class "hero-body" ] [
-                h1 [ _class "title" ] [ Text "Example" ]
+        section [ _class Bulma.hero ] [
+            div [ _class Bulma.``hero-body`` ] [
+                h1 [ _class Bulma.title ] [ Text "Example" ]
                 p [] [
                     Text "An example application using F#, giraffe, htmx and simple css."
                 ]

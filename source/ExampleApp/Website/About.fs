@@ -8,8 +8,8 @@ open ExampleApp.Website.Htmx
 
 let view: XmlNode =
     main [] [
-        section [ _class "section" ] [
-            h1 [ _class "title" ] [ Text "About us" ]
+        section [ _class Bulma.section ] [
+            h1 [ _class Bulma.title ] [ Text "About us" ]
             p [] [ Text
                        "Occaecati vel ex architecto et ut sed veniam odit. Saepe nemo omnis officiis. Ut enim molestiae itaque. Vitae vel assumenda deleniti tempore illum quas debitis. Hic ratione et sit quibusdam dolores repellat qui tempore. Molestiae consequatur voluptatem aspernatur aspernatur eos beatae.
                         Accusantium est omnis officiis consequuntur fuga et nobis. Alias sunt velit ipsa dolore dolorem. Id qui est itaque sit. Eveniet voluptatibus sunt laudantium.

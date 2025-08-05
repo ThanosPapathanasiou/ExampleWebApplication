@@ -11,16 +11,16 @@ open ExampleApp.Website.Base
 let indexView (posts: Post array): XmlNode =
     
     main [] [
-        section [ _class "section" ] [
-            h1 [ _class "title" ] [ Text "My latest posts!" ]
-            h2 [ _class "subtitle" ] [ Text "let's work together!" ]
+        section [ _class Bulma.section ] [
+            h1 [ _class Bulma.title ] [ Text "My latest posts!" ]
+            h2 [ _class Bulma.subtitle ] [ Text "let's work together!" ]
         ]
-        section [ _class "section" ] [
-            div [ _class "container" ] [
+        section [ _class Bulma.section ] [
+            div [ _class Bulma.container ] [
                 for post in posts ->
                     article [ _class "article" ] [
                         h3 [] [ Text post.Title ]
-                        div [ _class "content" ] [ Text post.Body ] 
+                        div [ _class Bulma.content ] [ Text post.Body ] 
                     ]
             ] 
         ]
