@@ -2,17 +2,7 @@
 
 open Giraffe.ViewEngine
 open Giraffe.ViewEngine.Accessibility
-open Zanaptak.TypedCssClasses
-
-open ExampleApp.Website.Htmx
-
-[<Literal>]
-let bulmaUrl = "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
-
-type Bulma = CssClasses<bulmaUrl>
-
-let inline _classes attributes =
-  attributes |> String.concat " " |> _class
+open ExampleApp.Website.Core
 
 /// Creates the html XmlNode that we pass to Giraffe to be returned to the browser.
 /// Accepts 'content' for a child page. The content should be a `main [] []` element. 
@@ -23,7 +13,7 @@ let createPage (content: XmlNode) : XmlNode =
         let id = text.Replace(" ", "-").ToLowerInvariant()
         a [
             _id id
-            _classes [Bulma.``navbar-item``]
+            _classes [ Bulma.``navbar-item`` ]
             _hxGet link ; _hxTarget "main" ; _hxSwap "outerHTML" ; _hxPushUrl "true"
             _hyperScript "on click remove .is-active from <a/> in closest .navbar-menu then add .is-active to me"
         ] [
@@ -44,19 +34,17 @@ let createPage (content: XmlNode) : XmlNode =
             script [ _src "https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" ] []
             script [ _src "https://unpkg.com/hyperscript.org@0.9.14" ] []
             script [ _src "https://kit.fontawesome.com/2e85dbb04c.js" ] []
+            
+            // _hyperScript """
+            //                 on keypress[key is '1'] trigger click on #home
+            //                 on keypress[key is '2'] trigger click on #contact
+            //                 on keypress[key is '3'] trigger click on #about-us
+            //              """
         ]
 
-        body [
-            _class Bulma.``is-fullheight``
-            _style "min-height: 100vh; display: flex; flex-direction: column;"
-            _hyperScript """
-                            on keypress[key is '1'] trigger click on #home
-                            on keypress[key is '2'] trigger click on #contact
-                            on keypress[key is '3'] trigger click on #about-us
-                         """
-        ] [
-            header [] [
-                nav [ _class Bulma.navbar ; _role "navigation"; _ariaLabel "main navigation" ] [
+        body [ _class Bulma.``is-fullheight`` ; _style "min-height: 100vh; display: flex; flex-direction: column;" ] [
+            header [ _style "padding-bottom: 48px;" ] [
+                nav [ _classes [ Bulma.navbar; Bulma.container ] ; _role "navigation"; _ariaLabel "main navigation" ] [
                     div [ _class  Bulma.``navbar-brand`` ] [
                         a [
                             _role "button"
@@ -88,11 +76,11 @@ let createPage (content: XmlNode) : XmlNode =
                                 ]
                             ]
                         ]
-                    ]
+                    ]                        
                 ]
             ]
             
-            content // content should always be a "main [] []"
+            content // content should be main [] []
             
             footer [ _class Bulma.footer ; _style "margin-top: auto" ] [
                 div [ _classes [ Bulma.content ; Bulma.``has-text-centered``] ] [

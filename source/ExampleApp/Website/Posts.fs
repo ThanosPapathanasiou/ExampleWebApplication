@@ -5,17 +5,17 @@ open Giraffe.ViewEngine
 open Microsoft.AspNetCore.Http
 open ExampleApp.Database.ConnectionManager
 open ExampleApp.Database.Models.Post
-open ExampleApp.Website.Htmx
+open ExampleApp.Website.Core
 open ExampleApp.Website.Base
 
 let indexView (posts: Post array): XmlNode =
     
-    main [] [
-        section [ _class Bulma.section ] [
+    main [ _classes [ Bulma.container; ] ] [
+        section [ ] [
             h1 [ _class Bulma.title ] [ Text "My latest posts!" ]
             h2 [ _class Bulma.subtitle ] [ Text "let's work together!" ]
         ]
-        section [ _class Bulma.section ] [
+        section [ ] [
             div [ _class Bulma.container ] [
                 for post in posts ->
                     article [ _class "article" ] [

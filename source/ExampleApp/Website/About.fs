@@ -4,11 +4,11 @@ open Giraffe
 open Giraffe.ViewEngine
 open Microsoft.AspNetCore.Http
 open ExampleApp.Website.Base
-open ExampleApp.Website.Htmx
+open ExampleApp.Website.Core
 
 let view: XmlNode =
-    main [] [
-        section [ _class Bulma.section ] [
+    main [ _class Bulma.container ] [
+        section [ ] [
             h1 [ _class Bulma.title ] [ Text "About us" ]
             p [] [ Text
                        "Occaecati vel ex architecto et ut sed veniam odit. Saepe nemo omnis officiis. Ut enim molestiae itaque. Vitae vel assumenda deleniti tempore illum quas debitis. Hic ratione et sit quibusdam dolores repellat qui tempore. Molestiae consequatur voluptatem aspernatur aspernatur eos beatae.

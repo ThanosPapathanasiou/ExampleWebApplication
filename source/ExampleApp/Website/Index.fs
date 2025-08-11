@@ -4,10 +4,10 @@ open Giraffe
 open Giraffe.ViewEngine
 open Microsoft.AspNetCore.Http
 open ExampleApp.Website.Base
-open ExampleApp.Website.Htmx
+open ExampleApp.Website.Core
 
 let view: XmlNode =
-    main [] [
+    main [ _class Bulma.container ] [
         section [ _class Bulma.hero ] [
             div [ _class Bulma.``hero-body`` ] [
                 h1 [ _class Bulma.title ] [ Text "Example" ]

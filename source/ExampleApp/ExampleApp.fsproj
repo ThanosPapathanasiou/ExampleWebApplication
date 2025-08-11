@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="Website\Htmx.fs" />
+        <Compile Include="Website\Core.fs" />
         <Compile Include="Website\Base.fs" />
         <Compile Include="Website\Components\FormComponents.fs" />
         <Compile Include="Website\Contact.fs" />

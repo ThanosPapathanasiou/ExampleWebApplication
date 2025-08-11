@@ -1,7 +1,14 @@
-﻿module ExampleApp.Website.Htmx
+﻿module ExampleApp.Website.Core
 
 open Microsoft.AspNetCore.Http
 open Giraffe.ViewEngine
+open Zanaptak.TypedCssClasses
+
+[<Literal>]
+let bulmaUrl = "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+type Bulma = CssClasses<bulmaUrl>
+
+let inline _classes (attributes : string list) = attributes |> String.concat " " |> _class
 
 let isHtmxRequest (ctx:HttpContext) : bool =
         ctx.Request.Headers.ContainsKey "HX-Request" &&
@@ -9,6 +16,7 @@ let isHtmxRequest (ctx:HttpContext) : bool =
 
 // there is a giraffe htmx library, but you can just add these as needed.
 
+let _hyperScript               = (attr "_")
 let _hxGet                     = (attr "hx-get")
 let _hxPost                    = (attr "hx-post")
 let _hxTrigger                 = (attr "hx-trigger")
@@ -20,9 +28,6 @@ let _hxSwap                    = (attr "hx-swap")
 let _hxPushUrl                 = (attr "hx-push-url")
 let _hxExt                     = (attr "hx-ext")
 let _hxDisableElement          = (attr "hx-disable-element")
-
-
 let _role                      = (attr "role")                
 
-let _hyperScript               = (attr "_")
-let _hyperScripts scripts      = scripts |> String.concat " " |> attr "_"
+
