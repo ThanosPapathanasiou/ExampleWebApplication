@@ -1,39 +1,39 @@
 ﻿module ExampleApp.Website.Base
 
-open Giraffe.ViewEngine
-open Giraffe.ViewEngine.Accessibility
+open Falco.Markup
+open Falco.Htmx
 open ExampleApp.Website.Core
 
-/// Creates the html XmlNode that we pass to Giraffe to be returned to the browser.
+/// Creates the html XmlNode that we pass to Falco to be returned to the browser.
 /// Accepts 'content' for a child page. The content should be a `main [] []` element. 
-let createPage (content: XmlNode) : XmlNode =
+let parentView (content: XmlNode) : XmlNode =
     
     /// creates a navbarItem `a` element
-    let navbarItem (text:string) (link:string) (icon:string): XmlNode  =
+    let _navbarItem (text:string) (link:string) (icon:string): XmlNode  =
         let id = text.Replace(" ", "-").ToLowerInvariant()
-        a [
-            _id id
-            _classes [ Bulma.``navbar-item`` ]
-            _hxGet link ; _hxTarget "main" ; _hxSwap "outerHTML" ; _hxPushUrl "true"
-            _hyperScript "on click remove .is-active from <a/> in closest .navbar-menu then add .is-active to me"
+        _a [
+            _id_ id
+            _classes_ [ Bulma.``navbar-item`` ]
+            Hx.get link ; Attr.create "hx-target" "main" ; Hx.swapOuterHtml ; Hx.pushUrlOn
+            _hyperScript_ "on click remove .is-active from <a/> in closest .navbar-menu then add .is-active to me"
         ] [
-            span [ _classes [ Bulma.icon ; Bulma.``is-small`` ] ] [
-                i [ _class icon; _ariaHidden "true"] [  ]
+            _span [ _classes_ [ Bulma.icon ; Bulma.``is-small`` ] ] [
+                _i [ _class_ icon; _ariaHidden_ "true"] [  ]
             ]
-            span [ _class Bulma.``ml-1`` ] [ Text text ]
+            _span [ _class_ Bulma.``ml-1`` ] [ _text text ]
         ]
  
-    html [ _id "html" ; _lang "en"; ] [
-        head [] [
-            title []  [ Text "Example Application" ]
-            meta [ _charset "utf-8" ]
-            meta [ _name "viewport"; _content "width=device-width, initial-scale=1" ]
+    _html [ _id_ "html" ; _lang_ "en"; ] [
+        _head [] [
+            _title []  [ _text "Example Application" ]
+            _meta [ _charset_ "utf-8" ]
+            _meta [ _name_ "viewport"; _content_ "width=device-width, initial-scale=1" ]
 
-            link [ _rel "icon"; _href "/favicon.png" ]
-            link [ _rel "stylesheet" ; _type "text/css"; _href bulmaUrl ]
-            script [ _src "https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" ] []
-            script [ _src "https://unpkg.com/hyperscript.org@0.9.14" ] []
-            script [ _src "https://kit.fontawesome.com/2e85dbb04c.js" ] []
+            _link [ _rel_ "icon"; _href_ "/favicon.png" ]
+            _link [ _rel_ "stylesheet" ; _type_ "text/css"; _href_ bulmaUrl ]
+            _script [ _src_ "https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" ] []
+            _script [ _src_ "https://unpkg.com/hyperscript.org@0.9.14" ] []
+            _script [ _src_ "https://kit.fontawesome.com/2e85dbb04c.js" ] []
             
             // _hyperScript """
             //                 on keypress[key is '1'] trigger click on #home
@@ -42,37 +42,37 @@ let createPage (content: XmlNode) : XmlNode =
             //              """
         ]
 
-        body [ _class Bulma.``is-fullheight`` ; _style "min-height: 100vh; display: flex; flex-direction: column;" ] [
-            header [ _style "padding-bottom: 48px;" ] [
-                nav [ _classes [ Bulma.navbar; Bulma.container ] ; _role "navigation"; _ariaLabel "main navigation" ] [
-                    div [ _class  Bulma.``navbar-brand`` ] [
-                        a [
-                            _role "button"
-                            _class Bulma.``navbar-burger`` ; (attr "data-target" "navbarBasicExample")
-                            _hyperScript "on click toggle .is-active on me then toggle .is-active on .navbar-menu"
-                            _ariaLabel "menu" ; _ariaExpanded "false"
+        _body [ _class_ Bulma.``is-fullheight`` ; _style_ "min-height: 100vh; display: flex; flex-direction: column;" ] [
+            _header [ _style_ "padding-bottom: 48px;" ] [
+                _nav [ _classes_ [ Bulma.navbar; Bulma.container ] ; _role_ "navigation"; _ariaLabel_ "main navigation" ] [
+                    _div [ _class_  Bulma.``navbar-brand`` ] [
+                        _a [
+                            _role_ "button"
+                            _class_ Bulma.``navbar-burger`` ; _dataTarget_ "navbarBasicExample"
+                            _hyperScript_ "on click toggle .is-active on me then toggle .is-active on .navbar-menu"
+                            _ariaLabel_ "menu" ; _ariaExpanded_ "false"
                         ] [
-                            span [ _ariaHidden "true" ] [] ; span [ _ariaHidden "true" ] []
-                            span [ _ariaHidden "true" ] [] ; span [ _ariaHidden "true" ] []
+                            _span [ _ariaHidden_ "true" ] [] ; _span [ _ariaHidden_ "true" ] []
+                            _span [ _ariaHidden_ "true" ] [] ; _span [ _ariaHidden_ "true" ] []
                         ]
                     ]
-                    div [ _id "navbarBasicExample" ; _class  Bulma.``navbar-menu`` ] [
-                        div [ _class Bulma.``navbar-start`` ] [
-                            navbarItem "Home"       "/"          "fa-solid fa-house"
-                            navbarItem "Contact"    "/contact"   "fa-solid fa-message"
-                            navbarItem "About us"   "/about"     "fa-solid fa-people-group"
+                    _div [ _id_ "navbarBasicExample" ; _class_  Bulma.``navbar-menu`` ] [
+                        _div [ _class_ Bulma.``navbar-start`` ] [
+                            _navbarItem "Home"       "/"          "fa-solid fa-house"
+                            _navbarItem "Contact"    "/contact"   "fa-solid fa-message"
+                            _navbarItem "About us"   "/about"     "fa-solid fa-people-group"
                         ]
-                        div [ _class Bulma.``navbar-end`` ] [
-                            div [ _class Bulma.``navbar-item`` ] [
-                                div [ _class Bulma.buttons ] [
-                                    a [
-                                        _class Bulma.button
+                        _div [ _class_ Bulma.``navbar-end`` ] [
+                            _div [ _class_ Bulma.``navbar-item`` ] [
+                                _div [ _class_ Bulma.buttons ] [
+                                    _a [
+                                        _class_ Bulma.button
                                         // TODO: we should actually do this with javascript and save stuff to local storage
-                                        _hyperScript """
+                                        _hyperScript_ """
                                             on click toggle [@data-theme=dark] on html
                                             on click if my textContent is 'Light mode' then set my textContent to 'Dark mode' else set my textContent to 'Light mode'
                                         """ 
-                                    ] [ Text "Dark mode" ]
+                                    ] [ _text "Dark mode" ]
                                 ]
                             ]
                         ]
@@ -82,10 +82,14 @@ let createPage (content: XmlNode) : XmlNode =
             
             content // content should be main [] []
             
-            footer [ _class Bulma.footer ; _style "margin-top: auto" ] [
-                div [ _classes [ Bulma.content ; Bulma.``has-text-centered``] ] [
-                    p [] [
-                        Text "Built using F# Giraffe HTMX and simple css"
+            _footer [ _class_ Bulma.footer ; _style_ "margin-top: auto" ] [
+                _div [ _classes_ [ Bulma.content ; Bulma.``has-text-centered``] ] [
+                    _p [] [
+                        _text "Built using:"
+                        _text " " ; _a [ _href_ "https://fsharp.org" ] [ _text "F#" ]
+                        _text " " ; _a [ _href_ "https://www.falcoframework.com" ] [ _text "Falco" ]
+                        _text " " ; _a [ _href_ "https://htmx.org" ] [ _text "Htmx" ]
+                        _text " " ; _a [ _href_ "https://bulma.io" ] [ _text "Bulma" ]
                     ]
                 ]
             ]

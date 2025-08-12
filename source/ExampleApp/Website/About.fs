@@ -1,16 +1,15 @@
 ﻿module ExampleApp.Website.About
 
-open Giraffe
-open Giraffe.ViewEngine
-open Microsoft.AspNetCore.Http
+open Falco
+open Falco.Markup
 open ExampleApp.Website.Base
 open ExampleApp.Website.Core
 
-let view: XmlNode =
-    main [ _class Bulma.container ] [
-        section [ ] [
-            h1 [ _class Bulma.title ] [ Text "About us" ]
-            p [] [ Text
+let childView =
+    _main [ _class_ Bulma.container ] [
+        _section [ ] [
+            _h1 [ _class_ Bulma.title ] [ _text "About us" ]
+            _p [] [ _text
                        "Occaecati vel ex architecto et ut sed veniam odit. Saepe nemo omnis officiis. Ut enim molestiae itaque. Vitae vel assumenda deleniti tempore illum quas debitis. Hic ratione et sit quibusdam dolores repellat qui tempore. Molestiae consequatur voluptatem aspernatur aspernatur eos beatae.
                         Accusantium est omnis officiis consequuntur fuga et nobis. Alias sunt velit ipsa dolore dolorem. Id qui est itaque sit. Eveniet voluptatibus sunt laudantium.
                         Cupiditate facilis neque molestias deserunt suscipit unde. Voluptatem repellendus aut maxime est officiis natus. Occaecati nobis quibusdam totam sapiente ipsa sint molestiae molestias. Doloribus libero ea cupiditate voluptas fugiat. Qui laborum ea sit. Veritatis dolorem autem iusto ut et.
@@ -20,9 +19,11 @@ let view: XmlNode =
         ]
     ]
 
-let ``GET /about`` : HttpHandler =
-    fun (next: HttpFunc) (ctx: HttpContext) ->
+let ``GET /about`` : FalconEndpoint = fun ctx ->
+    let view =
         if isHtmxRequest ctx then
-            htmlView view next ctx    
+            childView
         else
-            htmlView (createPage view) next ctx
+            parentView childView
+    
+    Response.ofHtml view ctx

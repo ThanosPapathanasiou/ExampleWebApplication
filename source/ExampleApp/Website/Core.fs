@@ -1,33 +1,23 @@
 ﻿module ExampleApp.Website.Core
 
 open Microsoft.AspNetCore.Http
-open Giraffe.ViewEngine
+open Falco.Markup
 open Zanaptak.TypedCssClasses
 
 [<Literal>]
 let bulmaUrl = "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
 type Bulma = CssClasses<bulmaUrl>
 
-let inline _classes (attributes : string list) = attributes |> String.concat " " |> _class
+type FalconEndpoint = HttpContext -> System.Threading.Tasks.Task
 
-let isHtmxRequest (ctx:HttpContext) : bool =
+let inline _classes_ (attributes : string list) = attributes |> String.concat " " |> _class_
+
+let inline isHtmxRequest (ctx:HttpContext) : bool =
         ctx.Request.Headers.ContainsKey "HX-Request" &&
         not (ctx.Request.Headers.ContainsKey "HX-History-Restore-Request") 
 
-// there is a giraffe htmx library, but you can just add these as needed.
-
-let _hyperScript               = (attr "_")
-let _hxGet                     = (attr "hx-get")
-let _hxPost                    = (attr "hx-post")
-let _hxTrigger                 = (attr "hx-trigger")
-let _hxTargetId (id:string)    = (attr "hx-target" ("#"+id))
-let _hxTarget                  = (attr "hx-target" )
-let _hxIndicator               = (attr "hx-indicator")
-let _hxIndicatorId (id:string) = (attr "hx-indicator" ("#"+id))
-let _hxSwap                    = (attr "hx-swap")
-let _hxPushUrl                 = (attr "hx-push-url")
-let _hxExt                     = (attr "hx-ext")
-let _hxDisableElement          = (attr "hx-disable-element")
-let _role                      = (attr "role")                
-
-
+let _hyperScript_  = Attr.create "_"
+let _dataTarget_   = Attr.create "data-target"
+let _ariaHidden_   = Attr.create "aria-hidden"
+let _ariaLabel_    = Attr.create "aria-label"
+let _ariaExpanded_ = Attr.create "aria-expanded"

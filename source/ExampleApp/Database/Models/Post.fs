@@ -6,7 +6,7 @@ open Dapper
 type Post = { Id: int64; Title: string; Body: string }
 
 let createPost (conn: IDbConnection) (title: string) (body: string) : Post =
-    let sql = "INSERT INTO POSTS(Title, Body) VALUES (@title, @body) RETURNING Id, Title, Body"
+    let sql = "INSERT INTO Posts(Title, Body) VALUES (@title, @body) RETURNING Id, Title, Body"
     let post = conn.QueryFirst<Post>(sql, {| Id = id; Title = title; Body = body |})
     post
 

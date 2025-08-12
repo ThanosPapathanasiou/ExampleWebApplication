@@ -1,27 +1,25 @@
 ﻿module ExampleApp.Website.Index
 
-open Giraffe
-open Giraffe.ViewEngine
-open Microsoft.AspNetCore.Http
+open Falco
+open Falco.Markup
 open ExampleApp.Website.Base
 open ExampleApp.Website.Core
 
-let view: XmlNode =
-    main [ _class Bulma.container ] [
-        section [ _class Bulma.hero ] [
-            div [ _class Bulma.``hero-body`` ] [
-                h1 [ _class Bulma.title ] [ Text "Example" ]
-                p [] [
-                    Text "An example application using F#, giraffe, htmx and simple css."
-                ]
+let childView =
+    _main [ _class_ Bulma.container ] [
+        _section [ _class_ Bulma.hero ] [
+            _div [ _class_ Bulma.``hero-body`` ] [
+                _h1 [ _class_ Bulma.title ] [ _text "Example" ]
+                _p' "An example application using F#, Falco, htmx and simple css."
             ]
         ]
     ]
 
-let ``GET /`` : HttpHandler =
-    fun (next: HttpFunc) (ctx: HttpContext) ->
-        let renderView =
-            match isHtmxRequest ctx with
-            | true -> view
-            | false -> createPage view
-        htmlView renderView next ctx
+let ``GET /`` : FalconEndpoint = fun ctx ->
+    let view =
+        if isHtmxRequest ctx then
+            childView
+        else
+            parentView childView
+    
+    Response.ofHtml view ctx

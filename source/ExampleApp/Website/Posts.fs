@@ -1,46 +1,48 @@
 ﻿module ExampleApp.Website.Posts
 
-open Giraffe
-open Giraffe.ViewEngine
-open Microsoft.AspNetCore.Http
-open ExampleApp.Database.ConnectionManager
-open ExampleApp.Database.Models.Post
+open Falco
+open Falco.Markup
 open ExampleApp.Website.Core
 open ExampleApp.Website.Base
+open ExampleApp.Database.Models.Post
+open ExampleApp.Database.ConnectionManager
 
-let indexView (posts: Post array): XmlNode =
+let childView (posts: Post array): XmlNode =
     
-    main [ _classes [ Bulma.container; ] ] [
-        section [ ] [
-            h1 [ _class Bulma.title ] [ Text "My latest posts!" ]
-            h2 [ _class Bulma.subtitle ] [ Text "let's work together!" ]
+    _main [ _classes_ [ Bulma.container; ] ] [
+        _section [ ] [
+            _h1 [ _class_ Bulma.title ] [ _text "My latest posts!" ]
+            _h2 [ _class_ Bulma.subtitle ] [ _text "let's work together!" ]
         ]
-        section [ ] [
-            div [ _class Bulma.container ] [
+        _section [ ] [
+            _div [ _class_ Bulma.container ] [
                 for post in posts ->
-                    article [ _class "article" ] [
-                        h3 [] [ Text post.Title ]
-                        div [ _class Bulma.content ] [ Text post.Body ] 
+                    _article [ _class_ "article" ] [
+                        _h3 [] [ _text post.Title ]
+                        _div [ _class_ Bulma.content ] [ _text post.Body ] 
                     ]
             ] 
         ]
     ]
 
 let createPostView: XmlNode =
-    main [] []
+    _main [] []
 
 let readPostView: XmlNode =
-    main [] [] 
+    _main [] [] 
 
-let ``GET /posts`` : HttpHandler =
-    fun (next: HttpFunc) (ctx: HttpContext) ->
-        let connectionManager = ctx.GetService<SqliteConnectionManager>()
+let ``GET /posts`` : FalconEndpoint  =
+    fun ctx ->
+        let connectionManager = ctx.Plug<SqliteConnectionManager>()
         use conn = connectionManager.GetConnection()
         let posts = readPosts conn |> Seq.take 10 |> Seq.toArray
+
+        let view =
+            if isHtmxRequest ctx then
+                childView posts
+            else
+                parentView (childView posts)
         
-        let view = indexView posts
-        
-        if isHtmxRequest ctx then
-            htmlView view next ctx    
-        else
-            htmlView (createPage view) next ctx
+        Response.ofHtml view ctx
+
+
