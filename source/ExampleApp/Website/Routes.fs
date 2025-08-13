@@ -18,10 +18,12 @@ let ``GET /up`` : HttpHandler = fun ctx -> Response.ofPlainText (healthCheckMess
 let notFoundHandler: HttpHandler = Response.redirectTemporarily "/" 
 
 let websiteRoutes = [
-        get "/"          Index.``GET /``
-        get "/contact"   Contact.``GET /contact``
-        get "/about"     About.``GET /about``
-        get "/posts"     Posts.``GET /posts``
+        get "/"           Index.``GET /``
+        get "/contact"    Contact.``GET /contact``
+        get "/about"      About.``GET /about``
+        
+        get "/posts"      Posts.``GET /posts``
+        get "/posts/new"  Posts.``GET /posts/new``
         
         // DO NOT CHANGE THE /version and /up ENDPOINTS. THEY ARE NEEDED FOR DEPLOYMENT
         get "/version"   ``GET /version``

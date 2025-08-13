@@ -2,47 +2,64 @@
 
 open Falco
 open Falco.Markup
-open ExampleApp.Website.Core
-open ExampleApp.Website.Base
 open ExampleApp.Database.Models.Post
 open ExampleApp.Database.ConnectionManager
+open ExampleApp.Website.Base
+open ExampleApp.Website.Components.FormComponents
 
-let childView (posts: Post array): XmlNode =
-    
+// list of posts, link to create one
+let indexView (posts: Post seq): XmlNode =
     _main [ _classes_ [ Bulma.container; ] ] [
         _section [ ] [
             _h1 [ _class_ Bulma.title ] [ _text "My latest posts!" ]
-            _h2 [ _class_ Bulma.subtitle ] [ _text "let's work together!" ]
         ]
         _section [ ] [
             _div [ _class_ Bulma.container ] [
                 for post in posts ->
-                    _article [ _class_ "article" ] [
+                    _article [ _class_ Bulma.section ] [
                         _h3 [] [ _text post.Title ]
-                        _div [ _class_ Bulma.content ] [ _text post.Body ] 
+                        _p [ _class_ Bulma.content ] [ _text post.Body ] 
                     ]
             ] 
         ]
     ]
 
-let createPostView: XmlNode =
-    _main [] []
+// create a new post 
+let createView token: XmlNode =
+    _main [ _class_ Bulma.container; ] [
+        formComponent token "create-post" "Create post" "/posts/new" "Submit" [
+            textFieldComponent { Id="Name"     ; Name="Name"     ; Label="Name"     ; Value=Initial }
+            textFieldComponent { Id="Lastname" ; Name="Lastname" ; Label="Lastname" ; Value=Valid "Papathanasiou" }
+            textFieldComponent { Id="Email"    ; Name="Email"    ; Label="Email"    ; Value=Invalid ("thanos@email.com", "Please insert a valid email") }
+        ]
+    ]
 
-let readPostView: XmlNode =
-    _main [] [] 
+// edit a post
+let editView token: XmlNode =
+    _main [ _class_ Bulma.container; ] [
+        formComponent token "edit-post" "Edit post" "/posts/" "Submit" [
+            _a [] [ _text "Something" ]
+        ]
+    ]
 
-let ``GET /posts`` : FalconEndpoint  =
-    fun ctx ->
-        let connectionManager = ctx.Plug<SqliteConnectionManager>()
-        use conn = connectionManager.GetConnection()
-        let posts = readPosts conn |> Seq.take 10 |> Seq.toArray
+let ``GET /posts`` : FalcoEndpoint  = fun ctx ->
+    let connectionManager = ctx.Plug<SqliteConnectionManager>()
+    use conn = connectionManager.GetConnection()
+    let posts = readPosts conn |> Seq.toArray
 
-        let view =
-            if isHtmxRequest ctx then
-                childView posts
-            else
-                parentView (childView posts)
-        
-        Response.ofHtml view ctx
+    let fullView =
+        if isHtmxRequest ctx then
+            indexView posts
+        else
+            parentView (indexView posts)
+    
+    Response.ofHtml fullView ctx
 
-
+let ``GET /posts/new`` : FalcoEndpoint  = fun ctx ->
+    let fullView token =
+        if isHtmxRequest ctx then
+            createView token
+        else
+            parentView (createView token)
+    
+    Response.ofHtmlCsrf fullView ctx

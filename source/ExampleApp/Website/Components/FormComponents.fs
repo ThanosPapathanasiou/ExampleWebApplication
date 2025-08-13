@@ -1,22 +1,16 @@
 ﻿module ExampleApp.Website.Components.FormComponents
 
-open ExampleApp.Website.Core
+open ExampleApp.Website.Base
 open Falco.Markup
 open Falco.Htmx
+open Falco.Security
 
-type Value          = string
+type TextValue      = string
 type ErrorMessage   = string
-type TextFieldValue = Initial | Invalid of (Value * ErrorMessage) | Valid of Value
+type TextFieldValue = Initial | Invalid of (TextValue * ErrorMessage) | Valid of TextValue
 
-type TextField = {
-    Id            : string
-    Label         : string
-    Name          : string
-    Url           : string
-    Value         : TextFieldValue
-}
-
-let textFieldComponent (textField:TextField) =
+type TextField = { Id: string; Label: string; Name: string; Value: TextFieldValue }
+let textFieldComponent (textField:TextField) : XmlNode  =
     let emptySpaceIcon = "&#160;"
     let successIcon    = "✔" 
     let warningIcon    = "⚠"
@@ -35,20 +29,8 @@ let textFieldComponent (textField:TextField) =
                 _name_             textField.Name
                 _title_            textField.Name
                 _value_            value
-
                 _type_             "Text"
                 _classes_          ([ Bulma.input ] @ cssClass)
-                
-                Hx.post             textField.Url
-                Hx.trigger         "blur delay:200ms"
-                Hx.targetClosest   Bulma.field
-
-                _hyperScript_      """
-                                    on htmx:beforeRequest if (closest <form/>).submitting then halt end
-                                    then on htmx:beforeRequest add .is-loading to (closest <div/>)
-                                    then on htmx:beforeRequest add @disabled to me
-                                    then on htmx:beforeRequest remove (next <span/>) end
-                                  """
             ]
             _span [ _classes_ [ Bulma.icon; Bulma.``is-right``; Bulma.``is-small`` ] ] [
                 _text icon
@@ -56,3 +38,32 @@ let textFieldComponent (textField:TextField) =
             _p [ _classes_ ([Bulma.help] @ cssClass) ] [ _text message ]
         ]
     ]
+
+let formComponent token name title submitUrl buttonText formFields : XmlNode =
+    _form [
+        _name_  name
+        _class_ Bulma.box
+        Hx.post submitUrl
+        Hx.swapOuterHtml
+
+        _hyperScript_ """
+            on submit set me.submitting to true wait for htmx:afterOnLoad from me set me.submitting to false
+        """   
+    ] (
+        [
+            Xsrf.antiforgeryInput token
+            _h2 [ _class_ Bulma.title ] [ _text title ]
+        ]
+        @
+        formFields    
+        @
+        [
+            _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
+                _div [ _class_ Bulma.control ] [
+                    _button [ _classes_ [ Bulma.button; Bulma.``is-link``] ] [
+                        _text buttonText
+                    ]
+                ]
+            ]
+        ]
+    )

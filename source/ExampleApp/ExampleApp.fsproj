@@ -25,7 +25,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="Website\Core.fs" />
         <Compile Include="Website\Base.fs" />
         <Compile Include="Website\Components\FormComponents.fs" />
         <Compile Include="Website\Contact.fs" />
@@ -38,10 +37,6 @@
     
     <ItemGroup>
         <Compile Include="Program.fs" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <ProjectReference Include="..\ExampleApp.Scheduler\ExampleApp.Scheduler.csproj" />
     </ItemGroup>
 
 </Project>

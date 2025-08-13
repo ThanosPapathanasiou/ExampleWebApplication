@@ -1,8 +1,7 @@
 open ExampleApp.Database.ConnectionManager
 open ExampleApp.Migrations
-open ExampleApp.Scheduler
-
 open ExampleApp.Website.Routes
+
 open Falco
 
 open Microsoft.AspNetCore.Builder
@@ -18,16 +17,15 @@ let main args =
     builder.Services.AddSingleton<SqliteConnectionManager>() |> ignore
     builder.Services.AddSingleton<LocationOfMigrationScripts>("ExampleApp.Database.Migrations.") |> ignore
     builder.Services.AddSingleton<MigrationRunner>() |> ignore
-    builder.Services.RegisterScheduler() |> ignore
-    
+
     let app = builder.Build()
 
-    // migrations
+    // migration
     app.PerformDatabaseMigrations() 
-    app.PerformSchedulerMigration()
     
     // background workers
-    app.UseScheduler()
+    // TODO: add background workers
+    // TODO: add cron jobs
     
     // website
     app

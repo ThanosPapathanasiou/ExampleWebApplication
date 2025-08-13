@@ -3,7 +3,6 @@
 open Falco
 open Falco.Markup
 open ExampleApp.Website.Base
-open ExampleApp.Website.Core
 
 let childView =
     _main [ _class_ Bulma.container ] [
@@ -19,7 +18,7 @@ let childView =
         ]
     ]
 
-let ``GET /about`` : FalconEndpoint = fun ctx ->
+let ``GET /about`` : FalcoEndpoint = fun ctx ->
     let view =
         if isHtmxRequest ctx then
             childView

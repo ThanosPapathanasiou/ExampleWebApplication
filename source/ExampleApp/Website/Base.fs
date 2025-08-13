@@ -2,7 +2,28 @@
 
 open Falco.Markup
 open Falco.Htmx
-open ExampleApp.Website.Core
+open Microsoft.AspNetCore.Http
+open Zanaptak.TypedCssClasses
+
+[<Literal>]
+let bulmaUrl = "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+type Bulma = CssClasses<bulmaUrl>
+
+// Falco helpers
+type FalcoEndpoint = HttpContext -> System.Threading.Tasks.Task
+let inline isHtmxRequest (ctx:HttpContext) : bool =
+        ctx.Request.Headers.ContainsKey "HX-Request" &&
+        not (ctx.Request.Headers.ContainsKey "HX-History-Restore-Request") 
+
+// Falco Markup helpers and XmlAttributes
+let inline _classes_ (attributes : string list) = attributes |> String.concat " " |> _class_
+let _hyperScript_  = Attr.create "_"
+let _dataTarget_   = Attr.create "data-target"
+let _ariaHidden_   = Attr.create "aria-hidden"
+let _ariaLabel_    = Attr.create "aria-label"
+let _ariaExpanded_ = Attr.create "aria-expanded"
+
+// ---------------------------------------------------------------------------------------------- //
 
 /// Creates the html XmlNode that we pass to Falco to be returned to the browser.
 /// Accepts 'content' for a child page. The content should be a `main [] []` element. 
@@ -90,6 +111,11 @@ let parentView (content: XmlNode) : XmlNode =
                         _text " " ; _a [ _href_ "https://www.falcoframework.com" ] [ _text "Falco" ]
                         _text " " ; _a [ _href_ "https://htmx.org" ] [ _text "Htmx" ]
                         _text " " ; _a [ _href_ "https://bulma.io" ] [ _text "Bulma" ]
+                    ]
+                    _a [
+                        _href_ "https://github.com/ThanosPapathanasiou/ExampleWebApplication"
+                    ] [
+                        _text "Browse the code"
                     ]
                 ]
             ]
