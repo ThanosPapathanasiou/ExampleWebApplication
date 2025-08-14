@@ -4,6 +4,10 @@ open System
 open Falco
 open Falco.Routing
 
+open ExampleApp.Website.Posts
+
+let notFoundHandler: HttpHandler = Response.redirectTemporarily "/" 
+
 let version =
     match Environment.GetEnvironmentVariable("VERSION") with
     | null -> "latest"
@@ -15,17 +19,16 @@ let healthCheckMessage() =
 
 let ``GET /version`` : HttpHandler = Response.ofPlainText version
 let ``GET /up`` : HttpHandler = fun ctx -> Response.ofPlainText (healthCheckMessage ()) ctx
-let notFoundHandler: HttpHandler = Response.redirectTemporarily "/" 
+let deploymentRoutes = [
+    // DO NOT CHANGE THE /version and /up ENDPOINTS. THEY ARE NEEDED FOR DEPLOYMENT
+    get "/version"               ``GET /version``
+    get "/up"                    ``GET /up``
+]
 
-let websiteRoutes = [
-        get "/"           Index.``GET /``
-        get "/contact"    Contact.``GET /contact``
-        get "/about"      About.``GET /about``
-        
-        get "/posts"      Posts.``GET /posts``
-        get "/posts/new"  Posts.``GET /posts/new``
-        
-        // DO NOT CHANGE THE /version and /up ENDPOINTS. THEY ARE NEEDED FOR DEPLOYMENT
-        get "/version"   ``GET /version``
-        get "/up"        ``GET /up``
-    ]
+let websiteRoutes =
+        [
+            get  "/"                        Index.``GET /``
+            get  "/about"                   About.``GET /about``
+        ]
+        @ postRoutes
+        @ deploymentRoutes

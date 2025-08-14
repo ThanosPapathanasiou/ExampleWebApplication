@@ -1,28 +1,124 @@
 ﻿module ExampleApp.Website.Base
 
+open Falco
 open Falco.Markup
 open Falco.Htmx
-open Microsoft.AspNetCore.Http
 open Zanaptak.TypedCssClasses
+open ExampleApp.Database.ConnectionManager
 
 [<Literal>]
 let bulmaUrl = "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
 type Bulma = CssClasses<bulmaUrl>
 
-// Falco helpers
-type FalcoEndpoint = HttpContext -> System.Threading.Tasks.Task
-let inline isHtmxRequest (ctx:HttpContext) : bool =
-        ctx.Request.Headers.ContainsKey "HX-Request" &&
-        not (ctx.Request.Headers.ContainsKey "HX-History-Restore-Request") 
-
 // Falco Markup helpers and XmlAttributes
 let inline _classes_ (attributes : string list) = attributes |> String.concat " " |> _class_
+let inline _hxTarget_ target = Attr.create "hx-target" target
 let _hyperScript_  = Attr.create "_"
 let _dataTarget_   = Attr.create "data-target"
 let _ariaHidden_   = Attr.create "aria-hidden"
 let _ariaLabel_    = Attr.create "aria-label"
 let _ariaExpanded_ = Attr.create "aria-expanded"
 
+
+// FALCO HELPERS AND GENERIC CRUD ENDPOINTS
+
+let inline isHtmxRequest (ctx:Microsoft.AspNetCore.Http.HttpContext) : bool =
+    ctx.Request.Headers.ContainsKey "HX-Request" &&
+    not (ctx.Request.Headers.ContainsKey "HX-History-Restore-Request") 
+
+let ``GET /<model>``<'T>
+    (ctx: Microsoft.AspNetCore.Http.HttpContext)
+    (readAll: System.Data.IDbConnection -> 'T seq)
+    (childView: 'T seq -> Falco.Markup.XmlNode)
+    (parentView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    : System.Threading.Tasks.Task = 
+
+    let inline isHtmxRequest (ctx:Microsoft.AspNetCore.Http.HttpContext) : bool =
+        ctx.Request.Headers.ContainsKey "HX-Request" &&
+        not (ctx.Request.Headers.ContainsKey "HX-History-Restore-Request") 
+       
+    let connectionManager = ctx.Plug<SqliteConnectionManager>()
+    use conn  = connectionManager.GetConnection()
+    let model =  conn |> readAll  |> Seq.truncate 5 |> Seq.toArray
+
+    let fullView =
+        if isHtmxRequest ctx then
+           model |> childView 
+        else
+           model |> childView |> parentView
+    
+    Response.ofHtml fullView ctx
+
+let ``GET /<model>/:id``<'T>
+    (ctx: Microsoft.AspNetCore.Http.HttpContext)
+    (readSingle: System.Data.IDbConnection -> int64 -> 'T Option)
+    (partialView: 'T -> Falco.Markup.XmlNode)
+    (childView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    (parentView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    : System.Threading.Tasks.Task =
+
+    let connectionManager = ctx.Plug<SqliteConnectionManager>()
+    use conn = connectionManager.GetConnection()
+
+    let route  = Request.getRoute ctx
+    let id = route.GetInt64 "id"
+    let model   = Option.get (readSingle conn id)
+
+    let fullView =
+        if isHtmxRequest ctx then
+            model |> partialView  |> childView 
+        else
+            model |> partialView  |> childView |> parentView
+    
+    Response.ofHtml fullView ctx
+    
+let ``GET /<model>/:id/view``<'T>
+    (ctx: Microsoft.AspNetCore.Http.HttpContext)
+    (readSingle: System.Data.IDbConnection -> int64 -> 'T Option)
+    (partialView: 'T -> Falco.Markup.XmlNode)
+    (childView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    (parentView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    : System.Threading.Tasks.Task =
+        
+    let connectionManager = ctx.Plug<SqliteConnectionManager>()
+    use conn = connectionManager.GetConnection()
+
+    let route = Request.getRoute ctx
+    let id = route.GetInt64 "id" //TODO: get the 'id' from the model
+    let model =  Option.get (readSingle conn id)
+
+    let fullView =
+        if isHtmxRequest ctx then
+            model |> partialView 
+        else
+            model |> partialView |> childView |> parentView
+    
+    Response.ofHtml fullView ctx
+
+let ``GET /<model>/:id/edit``<'T>
+    (ctx: Microsoft.AspNetCore.Http.HttpContext)
+    (readSingle: System.Data.IDbConnection -> int64 -> 'T Option)
+    (partialView: Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet -> 'T -> Falco.Markup.XmlNode)
+    (childView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    (parentView: Falco.Markup.XmlNode -> Falco.Markup.XmlNode)
+    : System.Threading.Tasks.Task =
+        
+    let connectionManager = ctx.Plug<SqliteConnectionManager>()
+    use conn = connectionManager.GetConnection()
+
+    let route = Request.getRoute ctx
+    let id = route.GetInt64 "id" //TODO: get the 'id' from the model
+    let model =  Option.get (readSingle conn id)
+
+    let fullView token =
+        if isHtmxRequest ctx then
+            partialView token model 
+        else
+            partialView token model |> childView |> parentView
+    
+    Response.ofHtmlCsrf fullView ctx    
+    
+    
 // ---------------------------------------------------------------------------------------------- //
 
 /// Creates the html XmlNode that we pass to Falco to be returned to the browser.
@@ -35,7 +131,7 @@ let parentView (content: XmlNode) : XmlNode =
         _a [
             _id_ id
             _classes_ [ Bulma.``navbar-item`` ]
-            Hx.get link ; Attr.create "hx-target" "main" ; Hx.swapOuterHtml ; Hx.pushUrlOn
+            Hx.get link ; _hxTarget_ "main" ; Hx.swapOuterHtml ; Hx.pushUrlOn
             _hyperScript_ "on click remove .is-active from <a/> in closest .navbar-menu then add .is-active to me"
         ] [
             _span [ _classes_ [ Bulma.icon ; Bulma.``is-small`` ] ] [
@@ -55,12 +151,6 @@ let parentView (content: XmlNode) : XmlNode =
             _script [ _src_ "https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" ] []
             _script [ _src_ "https://unpkg.com/hyperscript.org@0.9.14" ] []
             _script [ _src_ "https://kit.fontawesome.com/2e85dbb04c.js" ] []
-            
-            // _hyperScript """
-            //                 on keypress[key is '1'] trigger click on #home
-            //                 on keypress[key is '2'] trigger click on #contact
-            //                 on keypress[key is '3'] trigger click on #about-us
-            //              """
         ]
 
         _body [ _class_ Bulma.``is-fullheight`` ; _style_ "min-height: 100vh; display: flex; flex-direction: column;" ] [
@@ -79,9 +169,9 @@ let parentView (content: XmlNode) : XmlNode =
                     ]
                     _div [ _id_ "navbarBasicExample" ; _class_  Bulma.``navbar-menu`` ] [
                         _div [ _class_ Bulma.``navbar-start`` ] [
-                            _navbarItem "Home"       "/"          "fa-solid fa-house"
-                            _navbarItem "Contact"    "/contact"   "fa-solid fa-message"
-                            _navbarItem "About us"   "/about"     "fa-solid fa-people-group"
+                            _navbarItem "Home"   "/"       "fa-solid fa-house"
+                            _navbarItem "Posts"  "/posts"  "fa-solid fa-message"
+                            _navbarItem "About"  "/about"  "fa-solid fa-people-group"
                         ]
                         _div [ _class_ Bulma.``navbar-end`` ] [
                             _div [ _class_ Bulma.``navbar-item`` ] [
@@ -121,3 +211,5 @@ let parentView (content: XmlNode) : XmlNode =
             ]
         ]
     ]
+
+    

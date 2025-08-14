@@ -27,7 +27,6 @@
     <ItemGroup>
         <Compile Include="Website\Base.fs" />
         <Compile Include="Website\Components\FormComponents.fs" />
-        <Compile Include="Website\Contact.fs" />
         <Compile Include="Website\Posts.fs" />
         <Compile Include="Website\About.fs" />
         <Compile Include="Website\Index.fs" />
@@ -37,6 +36,12 @@
     
     <ItemGroup>
         <Compile Include="Program.fs" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Content Update="wwwroot\favicon.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

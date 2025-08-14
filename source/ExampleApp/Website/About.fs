@@ -7,18 +7,26 @@ open ExampleApp.Website.Base
 let childView =
     _main [ _class_ Bulma.container ] [
         _section [ ] [
-            _h1 [ _class_ Bulma.title ] [ _text "About us" ]
+            _h1 [ _class_ Bulma.title ] [ _text "About" ]
             _p [] [ _text
-                       "Occaecati vel ex architecto et ut sed veniam odit. Saepe nemo omnis officiis. Ut enim molestiae itaque. Vitae vel assumenda deleniti tempore illum quas debitis. Hic ratione et sit quibusdam dolores repellat qui tempore. Molestiae consequatur voluptatem aspernatur aspernatur eos beatae.
-                        Accusantium est omnis officiis consequuntur fuga et nobis. Alias sunt velit ipsa dolore dolorem. Id qui est itaque sit. Eveniet voluptatibus sunt laudantium.
-                        Cupiditate facilis neque molestias deserunt suscipit unde. Voluptatem repellendus aut maxime est officiis natus. Occaecati nobis quibusdam totam sapiente ipsa sint molestiae molestias. Doloribus libero ea cupiditate voluptas fugiat. Qui laborum ea sit. Veritatis dolorem autem iusto ut et.
-                        Dolorum facilis rem unde excepturi. Architecto nostrum fugit et est sit saepe non voluptas. Harum consequatur qui eveniet atque natus numquam. Dolorem rem ex ut modi cupiditate velit.
-                        Qui ut eum quidem fugit. Quidem officiis omnis eaque pariatur eveniet est. Quas voluptatem et in repudiandae et."
-                 ]
+                        """
+                        An example website built with F#, Falco, HTMX, and Bulma combines a functional-first programming language with a lightweight web framework, a dynamic JavaScript library for interactivity, and a modern CSS framework for styling. Here’s a breakdown of how these technologies work together to create a modern web application, with insights drawn from available resources:
+                        Overview of the Technologies
+                        """
+            ]
+            _br [] 
+            _p [] [ _text
+                        """
+                        F#: A functional-first programming language that emphasizes type safety, conciseness, and expressiveness. It’s great for building robust, maintainable server-side applications, especially when paired with .NET’s high-performance ecosystem.
+                        Falco: A functional-first toolkit for building full-stack web applications using F# and ASP.NET Core. It provides a simple routing API, a native F# view engine (Falco.Markup), and seamless integration with libraries like HTMX. Falco is designed to be lightweight, extensible, and easy to learn, leveraging ASP.NET Core’s performance capabilities.
+                        HTMX: A JavaScript library that enables dynamic, AJAX-driven interactions without heavy client-side scripting. It allows you to update parts of a webpage by making HTTP requests and swapping HTML content, all while keeping the front-end simple. With Falco, HTMX is often integrated via the Falco.Htmx package, which provides type-safe bindings for HTMX attributes.
+                        Bulma: A lightweight, modern CSS framework based on Flexbox. It provides pre-built, responsive components (e.g., buttons, forms, modals) that are easy to customize, making it ideal for rapid UI development without heavy JavaScript dependencies.
+                        """
+            ]
         ]
     ]
 
-let ``GET /about`` : FalcoEndpoint = fun ctx ->
+let ``GET /about`` = fun ctx ->
     let view =
         if isHtmxRequest ctx then
             childView

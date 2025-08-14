@@ -14,7 +14,7 @@ let childView =
         ]
     ]
 
-let ``GET /`` : FalcoEndpoint = fun ctx ->
+let ``GET /`` = fun ctx ->
     let view =
         if isHtmxRequest ctx then
             childView
