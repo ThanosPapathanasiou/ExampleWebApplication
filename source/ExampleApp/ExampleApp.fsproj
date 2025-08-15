@@ -8,7 +8,6 @@
         <!-- Database -->
         <PackageReference Include="Dapper" Version="2.1.66" />
         <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.7" />
-        <PackageReference Include="SQLitePCLRaw.core" Version="2.1.11" />
 
         <!-- Packages for frontend -->
         <PackageReference Include="Falco" Version="5.0.2" />
@@ -16,26 +15,30 @@
         <PackageReference Include="Falco.Htmx" Version="1.0.1" />
         <PackageReference Include="Zanaptak.TypedCssClasses" Version="1.0.0" />
     </ItemGroup>
-
+    
     <ItemGroup>
-        <Compile Include="Database\ConnectionManager.fs" />
-        <Compile Include="Database\MigrationRunner.fs" />
-        <Compile Include="Database\Models\*.fs" />
-        <EmbeddedResource Include="Database\Migrations\*.sql" />
+        <Content Include="Modules\Readme.md" />
+        <Compile Include="Modules\*.fs" />
+        <EmbeddedResource Include="Migrations\*.sql" />
     </ItemGroup>
 
     <ItemGroup>
+        <Content Include="Website\Readme.md" />
         <Compile Include="Website\Base.fs" />
+        <Compile Include="Website\Components\TextFieldComponent.fs" />
         <Compile Include="Website\Components\FormComponents.fs" />
+        <Compile Include="Website\ParentView.fs" />
         <Compile Include="Website\Posts.fs" />
         <Compile Include="Website\About.fs" />
         <Compile Include="Website\Index.fs" />
         <Compile Include="Website\Routes.fs" />
-        <Folder Include="Webservices\" />
+        
+        <Content Include="Webservices\Readme.md" />
+
+        <Compile Include="Program.fs" />
     </ItemGroup>
     
     <ItemGroup>
-        <Compile Include="Program.fs" />
     </ItemGroup>
     
     <ItemGroup>

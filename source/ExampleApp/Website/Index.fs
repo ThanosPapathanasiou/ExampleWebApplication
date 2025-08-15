@@ -2,7 +2,9 @@
 
 open Falco
 open Falco.Markup
+
 open ExampleApp.Website.Base
+open ExampleApp.Website.ParentView
 
 let childView =
     _main [ _class_ Bulma.container ] [

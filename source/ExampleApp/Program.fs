@@ -1,12 +1,15 @@
-open ExampleApp.Database.ConnectionManager
-open ExampleApp.Migrations
-open ExampleApp.Website.Routes
+open System.Data
+open Microsoft.AspNetCore.Builder
+open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
 
 open Falco
 
-open Microsoft.AspNetCore.Builder
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
+open Modules.SqliteConnectionManager
+open Modules.MigrationRunner
+
+open ExampleApp.Website.Routes
 
 [<EntryPoint>]
 let main args =
@@ -14,8 +17,18 @@ let main args =
     let builder = WebApplication.CreateBuilder(args)
 
     builder.Services.AddAntiforgery() |> ignore
-    builder.Services.AddSingleton<SqliteConnectionManager>() |> ignore
-    builder.Services.AddSingleton<LocationOfMigrationScripts>("ExampleApp.Database.Migrations.") |> ignore
+    
+    builder.Services.AddSingleton<SqliteConnectionManager>(
+        fun provider ->
+            let connectionString = provider.GetRequiredService<IConfiguration>().GetConnectionString("db")
+            SqliteConnectionManager(connectionString)
+        ) |> ignore
+    builder.Services.AddScoped<IDbConnection>(
+        fun provider ->
+            let connectionManager= provider.GetRequiredService<SqliteConnectionManager>()
+            connectionManager.GetConnection()
+            ) |> ignore
+    builder.Services.AddSingleton<LocationOfMigrationScripts>("ExampleApp.Migrations.") |> ignore
     builder.Services.AddSingleton<MigrationRunner>() |> ignore
 
     let app = builder.Build()

@@ -1,20 +1,18 @@
-﻿module ExampleApp.Migrations
+﻿module Modules.MigrationRunner
 
 open System.Data
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
-open Dapper
-open ExampleApp.Database.ConnectionManager
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
+open Dapper
 
 type LocationOfMigrationScripts = string
 
 type MigrationRunner(
     logger: ILogger<MigrationRunner>,
-    connectionManager: SqliteConnectionManager,
     migrationLocation:LocationOfMigrationScripts) =
 
     let getMigrationFiles (location:string) =
@@ -68,23 +66,22 @@ type MigrationRunner(
         let insertSql = "INSERT INTO __MigrationHistory (MigrationName) VALUES (@MigrationName)"
         conn.Execute(insertSql, {| MigrationName = migrationName |}) |> ignore
 
-    member this.RunMigration() =
-        let connection = connectionManager.GetConnection()
+    member this.RunMigration(conn: IDbConnection) =
         
-        ensureSqliteConfigured connection
-        ensureMigrationsTable connection
+        ensureSqliteConfigured conn
+        ensureMigrationsTable conn
         
-        use transaction = connection.BeginTransaction()
+        use transaction = conn.BeginTransaction()
         try
             let migrationFiles = getMigrationFiles migrationLocation
             for migrationFile in migrationFiles do
                 let fullMigrationName = Path.GetFileName(migrationFile)
                 let migrationName = fullMigrationName.TrimStart(migrationLocation.ToCharArray())
                 
-                if not (isMigrationApplied connection migrationName) then
+                if not (isMigrationApplied conn migrationName) then
                     let migrationScript = getMigrationScript fullMigrationName
-                    executeMigration connection logger migrationScript migrationName
-                    recordMigration connection migrationName
+                    executeMigration conn logger migrationScript migrationName
+                    recordMigration conn migrationName
                     logger.LogInformation $"Applied migration: {migrationName}"
                 else
                     logger.LogInformation $"Skipping already applied migration: {migrationName}"
@@ -102,4 +99,5 @@ type MigrationExtensions() =
     static member PerformDatabaseMigrations (app: WebApplication) =
         use scope = app.Services.CreateScope()
         let migrationRunner = scope.ServiceProvider.GetRequiredService<MigrationRunner>()
-        migrationRunner.RunMigration()
+        let connection = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+        migrationRunner.RunMigration(connection)
