@@ -30,7 +30,6 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
     let title = getTableName<'T>
     let baseUrl = title.ToLowerInvariant()
     let editUrl = $"/{baseUrl}/{record.Id}/edit"
-    let backUrl = $"/{baseUrl}"
     
     let formFields =
         getColumnMembers record
@@ -39,8 +38,6 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
     
     _div [
         _class_ Bulma.box
-        Hx.targetThis
-        Hx.swapOuterHtml
     ] (
         [
             _h2 [ _class_ Bulma.title ] [ _text title ]
@@ -50,21 +47,13 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
         @
         [
             _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
-                // _div [ _class_ Bulma.control ] [
-                //     _button [
-                //         _classes_ [ Bulma.button; Bulma.``is-link``]
-                //         Hx.get backUrl
-                //         Hx.pushUrlOn
-                //         _hxTarget_ "main"
-                //     ] [
-                //         _text "Back"
-                //     ]
-                // ]
-                
                 _div [ _class_ Bulma.control ] [
                     _button [
                         _classes_ [ Bulma.button; Bulma.``is-link``]
                         Hx.get editUrl
+                        Hx.targetCss ("." + Bulma.box)
+                        Hx.pushUrlOn
+                        Hx.swapOuterHtml
                     ] [
                         _text "Edit"
                     ]
@@ -87,8 +76,6 @@ let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : X
     
     _form [
         _class_ Bulma.box
-        Hx.targetThis
-        Hx.swapOuterHtml
         Hx.put submitUrl
     ] (
         [
@@ -100,14 +87,19 @@ let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : X
         @
         [
             _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
+
                 _div [ _class_ Bulma.control ] [
                     _button [
                         _classes_ [ Bulma.button; Bulma.``is-link``]
                         Hx.get cancelUrl
+                        Hx.targetCss ("." + Bulma.box)
+                        Hx.pushUrl $"/{baseUrl}/{record.Id}"
+                        Hx.swapOuterHtml
                     ] [
                         _text "Cancel"
                     ]
                 ]
+
                 _div [ _class_ Bulma.control ] [
                     _button [
                         _classes_ [ Bulma.button; Bulma.``is-link``]
@@ -214,7 +206,7 @@ let formRoutes<'T when 'T :> ActiveRecord>
         // Shows a single model in the way the user wants it to be shown in the provided 'getSingle_ChildView'
         // Provides click to edit functionality
         get  $"/{model}/{{id:int}}"          ( fun ctx -> ``GET /<model>/:id``<'T>      ctx clickToEditFormComponent  getSingle_ChildView parentView )
-        get  $"/{model}/{{id:int}}/view"     ( fun ctx -> ``GET /<model>/:id``<'T>      ctx clickToEditFormComponent  getSingle_ChildView parentView )
+        get  $"/{model}/{{id:int}}/view"     ( fun ctx -> ``GET /<model>/:id/view``<'T> ctx clickToEditFormComponent  getSingle_ChildView parentView )
         get  $"/{model}/{{id:int}}/edit"     ( fun ctx -> ``GET /<model>/:id/edit``<'T> ctx saveOrCancelFormComponent getSingle_ChildView parentView )
         
         // TODO: add missing put / delete `posts` endpoints
