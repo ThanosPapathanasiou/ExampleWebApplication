@@ -27,7 +27,7 @@ let main args =
         fun provider ->
             let connectionManager= provider.GetRequiredService<SqliteConnectionManager>()
             connectionManager.GetConnection()
-            ) |> ignore
+        ) |> ignore
     builder.Services.AddSingleton<LocationOfMigrationScripts>("ExampleApp.Migrations.") |> ignore
     builder.Services.AddSingleton<MigrationRunner>() |> ignore
 

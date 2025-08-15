@@ -4,7 +4,6 @@ open ExampleApp.Website.Base
 open Falco.Htmx
 open Falco.Markup
 
-
 /// Creates the html XmlNode that we pass to Falco to be returned to the browser.
 /// Accepts 'content' for a child page. The content should be a `main [] []` element. 
 let parentView (content: XmlNode) : XmlNode =
@@ -23,7 +22,7 @@ let parentView (content: XmlNode) : XmlNode =
             ]
             _span [ _class_ Bulma.``ml-1`` ] [ _text text ]
         ]
- 
+
     _html [ _id_ "html" ; _lang_ "en"; ] [
         _head [] [
             _title []  [ _text "Example Application" ]
@@ -32,8 +31,8 @@ let parentView (content: XmlNode) : XmlNode =
 
             _link [ _rel_ "icon"; _href_ "/favicon.png" ]
             _link [ _rel_ "stylesheet" ; _type_ "text/css"; _href_ bulmaUrl ]
-            _script [ _src_ "https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" ] []
-            _script [ _src_ "https://unpkg.com/hyperscript.org@0.9.14" ] []
+            _script [ _src_ "https://unpkg.com/htmx.org@2.0.6/dist/htmx.min.js" ] []
+            _script [ _src_ "https://unpkg.com/hyperscript.org@0.9.14/dist/_hyperscript.min.js"  ] []
             _script [ _src_ "https://kit.fontawesome.com/2e85dbb04c.js" ] []
         ]
 
@@ -63,20 +62,28 @@ let parentView (content: XmlNode) : XmlNode =
                                     _a [
                                         _class_ Bulma.button
                                         // TODO: we should actually do this with javascript and save stuff to local storage
-                                        _hyperScript_ """
-                                            on click toggle [@data-theme=dark] on html
-                                            on click if my textContent is 'Light mode' then set my textContent to 'Dark mode' else set my textContent to 'Light mode'
-                                        """ 
-                                    ] [ _text "Dark mode" ]
+                                        _hyperScript_
+"""
+    on click toggle [@data-theme=dark] on html
+    on click if my textContent is 'Light mode' then set my textContent to 'Dark mode' else set my textContent to 'Light mode'
+""" 
+                                        
+                                    ] [
+                                        // _span [ _classes_ [ Bulma.icon ; Bulma.``is-small`` ] ] [
+                                        //     _i [ _id_ "dark_mode_class" ; _class_ "fa-solid fa-moon" ; _ariaHidden_ "true"] [  ]
+                                        // ]
+
+                                        _span [ _id_ "dark_mode_text"  ; _class_ Bulma.``ml-1`` ] [ _text "Dark mode" ]
+                                    ]
                                 ]
                             ]
                         ]
-                    ]                        
+                    ]
                 ]
             ]
-            
+
             content // content should be main [] []
-            
+
             _footer [ _class_ Bulma.footer ; _style_ "margin-top: auto" ] [
                 _div [ _classes_ [ Bulma.content ; Bulma.``has-text-centered``] ] [
                     _p [] [

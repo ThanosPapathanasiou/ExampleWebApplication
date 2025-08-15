@@ -33,7 +33,7 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
     
     let formFields =
         getColumnMembers record
-        |> Array.map (fun (column, value) -> textFieldComponent { Id=column; Name=column; Label=column; Value = Valid (value :?> string) }) // TODO: make it handle types other than string
+        |> Array.map (fun (column, value) -> textFieldComponent { Id=column; Name=column; Label=column; Value = Disabled (value :?> string) }) // TODO: make it handle types other than string
         |> Array.toList
     
     _div [

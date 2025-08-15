@@ -17,12 +17,10 @@ let healthCheckMessage() =
     let timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
     $"{{ \"timestamp\":\"%s{timestamp}\" ,\"version\":\"%s{version}\" }}"
 
-let ``GET /version`` : HttpHandler = Response.ofPlainText version
-let ``GET /up`` : HttpHandler = fun ctx -> Response.ofPlainText (healthCheckMessage ()) ctx
 let deploymentRoutes = [
     // DO NOT CHANGE THE /version and /up ENDPOINTS. THEY ARE NEEDED FOR DEPLOYMENT
-    get "/version"               ``GET /version``
-    get "/up"                    ``GET /up``
+    get "/version" (fun ctx -> Response.ofPlainText version ctx)
+    get "/up"      (fun ctx -> Response.ofPlainText (healthCheckMessage ()) ctx)
 ]
 
 let websiteRoutes =

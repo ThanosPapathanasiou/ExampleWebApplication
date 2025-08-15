@@ -4,7 +4,7 @@ open Falco.Markup
 open Zanaptak.TypedCssClasses
 
 [<Literal>]
-let bulmaUrl = "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+let bulmaUrl = "https://unpkg.com/bulma@1.0.4/css/bulma.css"
 type Bulma = CssClasses<bulmaUrl>
 
 // Falco Markup helpers and XmlAttributes
