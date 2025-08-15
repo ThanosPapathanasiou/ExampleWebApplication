@@ -5,7 +5,12 @@ open Falco.Markup
 
 type TextValue      = string
 type ErrorMessage   = string
-type TextFieldValue = Initial | Disabled of TextValue | Invalid of (TextValue * ErrorMessage) | Valid of TextValue
+type TextFieldValue =
+    | Initial of TextValue
+    | Disabled of TextValue
+    | Invalid of (TextValue * ErrorMessage)
+    | Valid of TextValue
+
 type TextField      = { Id: string; Label: string; Name: string; Value: TextFieldValue }
 
 let textFieldComponent (textField:TextField) : XmlNode  =
@@ -15,7 +20,7 @@ let textFieldComponent (textField:TextField) : XmlNode  =
 
     let cssClass, value, message, icon =
         match textField.Value with
-        | Initial                -> [""]                  , ""   , emptySpaceIcon, emptySpaceIcon
+        | Initial  value         -> [""]                  , value, emptySpaceIcon, emptySpaceIcon
         | Disabled value         -> [""]                  , value, emptySpaceIcon, emptySpaceIcon
         | Invalid (value, error) -> [Bulma.``is-danger`` ], value, error         , warningIcon
         | Valid    value         -> [Bulma.``is-success``], value, emptySpaceIcon, successIcon

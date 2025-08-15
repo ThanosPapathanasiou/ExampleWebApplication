@@ -71,7 +71,7 @@ let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : X
     // TODO: make it handle types other than string
     let components =
         getColumnMembers record
-        |> Array.map (fun (column, value) -> textFieldComponent { Id=column; Name=column; Label=column; Value = Valid (value :?> string) }) 
+        |> Array.map (fun (column, value) -> textFieldComponent { Id=column; Name=column; Label=column; Value = Initial (value :?> string) }) 
         |> Array.toList
     
     _form [
