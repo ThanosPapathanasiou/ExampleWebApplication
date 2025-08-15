@@ -49,7 +49,18 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
             _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
                 _div [ _class_ Bulma.control ] [
                     _button [
-                        _classes_ [ Bulma.button; Bulma.``is-link``]
+                        _classes_ [ Bulma.button; Bulma.``is-link``; ]
+                        Hx.get $"/{baseUrl}"
+                        _hxTarget_ "main"
+                        Hx.pushUrlOn
+                        Hx.swapOuterHtml
+                    ] [
+                        _text "Back"
+                    ]
+                ]
+                _div [ _class_ Bulma.control ] [
+                    _button [
+                        _classes_ [ Bulma.button; Bulma.``is-link``; ]
                         Hx.get editUrl
                         Hx.targetCss ("." + Bulma.box)
                         Hx.pushUrlOn
@@ -59,7 +70,8 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
                     ]
                 ]
             ]
-    ])
+        ]
+    )
 
 let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
     
@@ -87,10 +99,9 @@ let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : X
         @
         [
             _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
-
                 _div [ _class_ Bulma.control ] [
                     _button [
-                        _classes_ [ Bulma.button; Bulma.``is-link``]
+                        _classes_ [ Bulma.button; Bulma.``is-link``; Bulma.``is-danger`` ]
                         Hx.get cancelUrl
                         Hx.targetCss ("." + Bulma.box)
                         Hx.pushUrl $"/{baseUrl}/{record.Id}"
@@ -99,17 +110,16 @@ let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : X
                         _text "Cancel"
                     ]
                 ]
-
                 _div [ _class_ Bulma.control ] [
                     _button [
-                        _classes_ [ Bulma.button; Bulma.``is-link``]
+                        _classes_ [ Bulma.button; Bulma.``is-link``;  Bulma.``is-success`` ]
                         _typeSubmit_
                     ] [
                         _text "Submit"
                     ]
                 ]
             ]
-    ])
+        ])
 
 let ``GET /<model>``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
