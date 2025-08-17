@@ -3,11 +3,11 @@
 open System.Data
 open System.Threading.Tasks
 open ExampleApp.Website.Components.TextFieldComponent
-open Falco.Routing
 open Microsoft.AspNetCore.Antiforgery
 open Microsoft.AspNetCore.Http
 
 open Falco
+open Falco.Routing
 open Falco.Markup
 open Falco.Htmx
 open Falco.Security
@@ -15,26 +15,23 @@ open Falco.Security
 open Modules.ActiveRecord
 open ExampleApp.Website.Base
 
-// TODO: complete the CRUD endpoints/views, we are missing the following
-//      GET    /model/new
-//      POST   /model/
-//      DELETE /model/:id
+// Generic functions to enable you to create a crud endpoints/views that work with an Active Model class
 
-// TODO: Get validation to work with System.ComponentModel
+let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly: bool) =
+    getColumnMembers record
+        |> Array.map (fun (column, value) ->
+            match value with
+            | :? string as strValue -> textFieldComponent { Id=column; Label=column; Name=column; Value = strValue; Readonly = isReadonly }
+            // TODO: handle other types of data
+            | _ -> failwith "unhandled type"            
+        )
+        |> Array.toList
 
-// TODO: Get datatypes other than string to work
-
-// Generic components to enable you to create a crud endpoints/views that work with an Active Model class
-
-let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
+let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
     let title = getTableName<'T>
     let baseUrl = title.ToLowerInvariant()
     let editUrl = $"/{baseUrl}/{record.Id}/edit"
-    
-    let formFields =
-        getColumnMembers record
-        |> Array.map (fun (column, value) -> textFieldComponent { Id=column; Name=column; Label=column; Value = Disabled (value :?> string) }) // TODO: make it handle types other than string
-        |> Array.toList
+    let formFields = getFormFieldsFromRecord<'T> record true
     
     _div [
         _class_ Bulma.box
@@ -73,29 +70,26 @@ let clickToEditFormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode 
         ]
     )
 
-let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
+let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
     
     let tableName = getTableName<'T>
     let baseUrl   = tableName.ToLowerInvariant()
     let submitUrl = $"/{baseUrl}/{record.Id}"
     let cancelUrl = $"/{baseUrl}/{record.Id}/view"
-    
-    // TODO: make it handle types other than string
-    let components =
-        getColumnMembers record
-        |> Array.map (fun (column, value) -> textFieldComponent { Id=column; Name=column; Label=column; Value = Initial (value :?> string) }) 
-        |> Array.toList
+    let formFields = getFormFieldsFromRecord<'T> record false
     
     _form [
         _class_ Bulma.box
         Hx.put submitUrl
+        Hx.swapOuterHtml
+        Hx.targetCss ("." + Bulma.box)
     ] (
         [
             _h2 [ _class_ Bulma.title ] [ _text tableName ]
             Xsrf.antiforgeryInput token
         ]
         @
-        components
+        formFields
         @
         [
             _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
@@ -121,7 +115,7 @@ let saveOrCancelFormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : X
             ]
         ])
 
-let ``GET /<model>``<'T when 'T :> ActiveRecord>
+let ``GET /model``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
     (childView: 'T seq   -> XmlNode)
     (parentView: XmlNode -> XmlNode)
@@ -138,7 +132,34 @@ let ``GET /<model>``<'T when 'T :> ActiveRecord>
     
     Response.ofHtml fullView ctx
 
-let ``GET /<model>/:id``<'T when 'T :> ActiveRecord>
+let ``PUT /model/id``<'T when 'T :> ActiveRecord>
+    (ctx: HttpContext)
+    (successPartialView: 'T -> XmlNode)
+    (failedPartialView: AntiforgeryTokenSet -> 'T -> XmlNode)
+    (childView:  XmlNode -> XmlNode)
+    (parentView: XmlNode -> XmlNode)
+    : Task =
+    task {
+        // TODO: validate antiforgery token
+        
+        let model = getRecordFromHttpRequest<'T> ctx.Request
+        let validations = validateRecord<'T> model
+
+        let partialView ctx = 
+            match validations.Length with
+            | 0 -> successPartialView 
+            | _ -> failedPartialView (Xsrf.getToken ctx) 
+        
+        let view  =
+            if isHtmxRequest ctx then
+                partialView ctx model
+            else
+                partialView ctx model |> childView |> parentView
+        
+        return! Response.ofHtml view ctx
+    }
+
+let ``GET /model/id``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
     (partialView:     'T -> XmlNode)
     (childView:  XmlNode -> XmlNode)
@@ -157,8 +178,8 @@ let ``GET /<model>/:id``<'T when 'T :> ActiveRecord>
             model |> partialView  |> childView |> parentView
     
     Response.ofHtml view ctx
-    
-let ``GET /<model>/:id/view``<'T when 'T :> ActiveRecord>
+
+let ``GET /model/id/view``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
     (partialView:     'T -> XmlNode)
     (childView:  XmlNode -> XmlNode)
@@ -179,13 +200,13 @@ let ``GET /<model>/:id/view``<'T when 'T :> ActiveRecord>
     
     Response.ofHtml view ctx
 
-let ``GET /<model>/:id/edit``<'T when 'T :> ActiveRecord>
+let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
     (partialView: AntiforgeryTokenSet -> 'T -> XmlNode)
     (childView:  XmlNode -> XmlNode)
     (parentView: XmlNode -> XmlNode)
     : Task =
-        
+
     use conn = ctx.Plug<IDbConnection>()
 
     let route = Request.getRoute ctx
@@ -199,26 +220,24 @@ let ``GET /<model>/:id/edit``<'T when 'T :> ActiveRecord>
             partialView token model |> childView |> parentView
     
     Response.ofHtmlCsrf view ctx    
-    
-let formRoutes<'T when 'T :> ActiveRecord>
-    (getAll_ChildView:  'T seq -> XmlNode )
+
+let getEndpointListForType<'T when 'T :> ActiveRecord>
     (getSingle_ChildView: XmlNode -> XmlNode )
-    (parentView: XmlNode -> XmlNode ) =
+    (getAll_ChildView:  'T seq -> XmlNode )
+    (parentView: XmlNode -> XmlNode ) : HttpEndpoint list =
     
     let model = getTableName<'T>.ToLowerInvariant()
     
     [
-        // View a list of models
-        // Shows a list of 'T items and expects the user to provide the html for them in the 'getAll_ChildView' that they provide
-        get  $"/{model}"                     ( fun ctx -> ``GET /<model>``<'T>          ctx                           getAll_ChildView    parentView )
+        get  $"/{model}"                     ( fun ctx -> ``GET /model``<'T>         ctx                                       getAll_ChildView    parentView )
+        get  $"/{model}/{{id:int}}"          ( fun ctx -> ``GET /model/id``<'T>      ctx view_FormComponent                    getSingle_ChildView parentView )
+        put  $"/{model}/{{id:int}}"          ( fun ctx -> ``PUT /model/id``<'T>      ctx view_FormComponent edit_FormComponent getSingle_ChildView parentView )
+        get  $"/{model}/{{id:int}}/view"     ( fun ctx -> ``GET /model/id/view``<'T> ctx view_FormComponent                    getSingle_ChildView parentView )
+        get  $"/{model}/{{id:int}}/edit"     ( fun ctx -> ``GET /model/id/edit``<'T> ctx edit_FormComponent                    getSingle_ChildView parentView )
         
-        // View or Edit a single model
-        // Shows a single model in the way the user wants it to be shown in the provided 'getSingle_ChildView'
-        // Provides click to edit functionality
-        get  $"/{model}/{{id:int}}"          ( fun ctx -> ``GET /<model>/:id``<'T>      ctx clickToEditFormComponent  getSingle_ChildView parentView )
-        get  $"/{model}/{{id:int}}/view"     ( fun ctx -> ``GET /<model>/:id/view``<'T> ctx clickToEditFormComponent  getSingle_ChildView parentView )
-        get  $"/{model}/{{id:int}}/edit"     ( fun ctx -> ``GET /<model>/:id/edit``<'T> ctx saveOrCancelFormComponent getSingle_ChildView parentView )
         
-        // TODO: add missing put / delete `posts` endpoints
-        // TODO: add missing put / delete `posts` endpoints
+        // TODO: add missing DEL  /model/id          endpoint
+        // TODO: add missing POST /model/id/validate endpoint 
+        // TODO: add missing GET  /model/new         endpoint
+        // TODO: add missing POST /model             endpoint
     ]

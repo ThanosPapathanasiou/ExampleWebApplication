@@ -31,7 +31,7 @@
         <Compile Include="Website\Posts.fs" />
         <Compile Include="Website\About.fs" />
         <Compile Include="Website\Index.fs" />
-        <Compile Include="Website\Routes.fs" />
+        <Compile Include="Website\Endpoints.fs" />
         
         <Content Include="Webservices\Readme.md" />
 

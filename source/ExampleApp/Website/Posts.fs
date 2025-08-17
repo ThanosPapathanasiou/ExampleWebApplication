@@ -1,6 +1,7 @@
 ﻿module ExampleApp.Website.Posts
 
 open System.ComponentModel
+open System.ComponentModel.DataAnnotations
 open System.ComponentModel.DataAnnotations.Schema
 
 open Falco.Htmx
@@ -19,16 +20,18 @@ type Post() =
 
     [<Column("Title")>]
     [<DisplayName("Title")>]
+    [<Required>]
     member val Title : string = "" with get, set
-    
+
     [<Column("Body")>]
     [<DisplayName("Body")>]
+    [<Required>]
     member val Body : string = "" with get, set  
 
 
 // ----- Views -----
 
-let getAll_ChildView (posts: Post seq): XmlNode =
+let multiPostView (posts: Post seq): XmlNode =
     _main [ _class_ Bulma.container ] [
         _section [ ] [
             _h1 [ _class_ Bulma.title ] [ _text "My latest posts!" ]
@@ -61,7 +64,7 @@ let getAll_ChildView (posts: Post seq): XmlNode =
         ]
     ]
 
-let getSingle_ChildView partialView : XmlNode =
+let singlePostView partialView : XmlNode =
     _main [ _classes_ [ Bulma.container; ] ] [
         _section [ ] [
             _div [ _class_ Bulma.container ] [
@@ -70,6 +73,5 @@ let getSingle_ChildView partialView : XmlNode =
         ]
     ]
 
-
 // ----- Routes -----
-let postRoutes = formRoutes<Post> getAll_ChildView getSingle_ChildView parentView
+let postEndpoints = getEndpointListForType<Post> singlePostView multiPostView parentView

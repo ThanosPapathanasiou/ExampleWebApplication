@@ -45,7 +45,7 @@ let main args =
         .UseStaticFiles()
         .UseAntiforgery()
         .UseRouting()
-        .UseFalco(websiteRoutes)
+        .UseFalco(websiteEndpoints)
         .UseFalcoNotFound(notFoundHandler)
         
     app.Run()

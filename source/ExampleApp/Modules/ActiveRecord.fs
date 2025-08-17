@@ -1,10 +1,12 @@
 ﻿module Modules.ActiveRecord
     
+open System
 open System.ComponentModel.DataAnnotations
 open System.ComponentModel.DataAnnotations.Schema
 open System.Data
 open System.Reflection
 open Dapper
+open Microsoft.AspNetCore.Http
 
 [<AbstractClass>]
 type ActiveRecord() =
@@ -13,7 +15,20 @@ type ActiveRecord() =
     [<DatabaseGenerated(DatabaseGeneratedOption.Identity)>]
     member val Id : int64 = 0L with get, set
 
-// CRUD
+// HELPER FUNCTIONS
+
+let getTableName<'T when 'T :> ActiveRecord> : string = typeof<'T>.GetCustomAttribute<TableAttribute>().Name 
+
+/// Get non-database generated columns
+let getColumnMembers<'T when 'T :> ActiveRecord> (record: 'T) : (string * obj) array =
+    typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+    |> Array.filter (fun prop -> prop.GetCustomAttribute<DatabaseGeneratedAttribute>() = null)
+    |> Array.filter (fun prop -> prop.GetCustomAttribute<ColumnAttribute>() <> null)
+    |> Array.map (fun prop -> 
+        let columnAttr = prop.GetCustomAttribute<ColumnAttribute>()
+        columnAttr.Name, prop.GetValue(record))
+
+// DATABASE FUNCTIONS
 
 let createRecord<'T when 'T :> ActiveRecord> (conn: IDbConnection) (record: 'T) : 'T =
     let tableName = typeof<'T>.GetCustomAttribute<TableAttribute>().Name
@@ -109,26 +124,27 @@ let readRecords<'T when 'T :> ActiveRecord> (conn: IDbConnection) : seq<'T> =
     // Execute the query using Dapper
     conn.Query<'T>(sql)
 
+// HTTP FUNCTIONS
 
-let getTableName<'T when 'T :> ActiveRecord> : string =
-    typeof<'T>.GetCustomAttribute<TableAttribute>().Name
+/// This function takes an IFormCollection and gives you a record of type 'T
+/// You can use it in PUT / POST handlers  
+let getRecordFromHttpRequest<'T when 'T :> ActiveRecord> (request: HttpRequest) : 'T =
+    let form = request.Form
+    let instance = Activator.CreateInstance<'T>()
+    let properties = typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+    for prop in properties do
+        let value =
+            if prop.Name = "Id" then
+                request.RouteValues.["id"].ToString()
+            else
+                form.[prop.Name].ToString()
+        let convertedValue = Convert.ChangeType(value, prop.PropertyType)
+        prop.SetValue(instance, convertedValue)
+    instance
 
-let getColumnMembers<'T> (record: 'T) =
-    typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
-    |> Array.filter (fun prop -> prop.GetCustomAttribute<DatabaseGeneratedAttribute>() = null)
-    |> Array.filter (fun prop -> prop.GetCustomAttribute<ColumnAttribute>() <> null)
-    |> Array.map (fun prop -> 
-        let columnAttr = prop.GetCustomAttribute<ColumnAttribute>()
-        columnAttr.Name, prop.GetValue(record))
-
-
-// TODO: implement validatePerson<'T when 'T :> ActiveRecord> (record: 'T) that works with System.ComponentMode.DataAnnotations
- 
-// let validatePerson<'T when 'T :> ActiveRecord> (record: 'T) =
-//     let context = ValidationContext(record)
-//     let results = ValidationResult()
-//     let isValid = Validator.TryValidateObject(record, context, results, true)
-//     if isValid then
-//         Ok record
-//     else
-//         Error results    
+/// This function will validate the 'T record based on its System.ComponentModel validations
+let validateRecord<'T when 'T :> ActiveRecord> (record: 'T) : ValidationResult array  =
+    let context = ValidationContext(record)
+    let results = ResizeArray<ValidationResult>()
+    Validator.TryValidateObject(record, context, results, true) |> ignore
+    results.ToArray()
