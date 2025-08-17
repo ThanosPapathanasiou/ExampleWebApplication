@@ -23,6 +23,22 @@ let parentView (content: XmlNode) : XmlNode =
             _span [ _class_ Bulma.``ml-1`` ] [ _text text ]
         ]
 
+    let _darkModeButton = 
+        _div [ _class_ Bulma.buttons ] [
+            _a [
+                _class_ Bulma.button
+                // TODO: we should actually do this with javascript and save stuff to local storage
+                _hyperScript_
+"""
+    on click toggle [@data-theme=dark] on html
+    on click if my textContent is 'Light mode' then set my textContent to 'Dark mode' else set my textContent to 'Light mode'
+""" 
+                                        
+            ] [
+                _span [ _id_ "dark_mode_text"  ; _class_ Bulma.``ml-1`` ] [ _text "Dark mode" ]
+            ]
+        ]
+
     _html [ _id_ "html" ; _lang_ "en"; ] [
         _head [] [
             _title []  [ _text "Example Application" ]
@@ -58,24 +74,7 @@ let parentView (content: XmlNode) : XmlNode =
                         ]
                         _div [ _class_ Bulma.``navbar-end`` ] [
                             _div [ _class_ Bulma.``navbar-item`` ] [
-                                _div [ _class_ Bulma.buttons ] [
-                                    _a [
-                                        _class_ Bulma.button
-                                        // TODO: we should actually do this with javascript and save stuff to local storage
-                                        _hyperScript_
-"""
-    on click toggle [@data-theme=dark] on html
-    on click if my textContent is 'Light mode' then set my textContent to 'Dark mode' else set my textContent to 'Light mode'
-""" 
-                                        
-                                    ] [
-                                        // _span [ _classes_ [ Bulma.icon ; Bulma.``is-small`` ] ] [
-                                        //     _i [ _id_ "dark_mode_class" ; _class_ "fa-solid fa-moon" ; _ariaHidden_ "true"] [  ]
-                                        // ]
-
-                                        _span [ _id_ "dark_mode_text"  ; _class_ Bulma.``ml-1`` ] [ _text "Dark mode" ]
-                                    ]
-                                ]
+                                // _darkModeButton
                             ]
                         ]
                     ]

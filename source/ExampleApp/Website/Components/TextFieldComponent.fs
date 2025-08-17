@@ -3,14 +3,45 @@
 open ExampleApp.Website.Base
 open Falco.Markup
 
-type TextField      = { Id: string; Label: string; Name: string; Value: string; Readonly: bool }
+type TextField = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
 
-let textFieldComponent (textField:TextField) : XmlNode  =
-    let emptySpaceIcon = " " //"&#160;"
+let _validationErrorMessageFor (fieldId: string) (errorMessage: string) =
     let successIcon = "✔"
     let successCss  = Bulma.``is-success``
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
+    
+    _p [
+        _id_  $"{fieldId}_validation_message"
+        _classes_ [ Bulma.help; Bulma.``is-danger`` ]
+        _style_ "height: 18px"
+        _hyperScript_  $"
+            on mutation
+                if my.innerHTML is ''
+                    remove .{errorCss} from #{fieldId}
+                    remove '{errorIcon}' from #{fieldId}_validation_icon
+                    add .{successCss} to #{fieldId}
+                    put '{successIcon}' into #{fieldId}_validation_icon
+                else
+                    remove .{successCss} from #{fieldId}
+                    remove '{successIcon}' from #{fieldId}_validation_icon
+                    add .{errorCss} to #{fieldId}
+                    put '{errorIcon}' into #{fieldId}_validation_icon
+        "
+    ] [
+        _text errorMessage
+    ]
+
+let rec textFieldComponent (textField:TextField) : XmlNode  =
+    let successIcon = "✔"
+    let successCss  = Bulma.``is-success``
+    let errorIcon   = "⚠"
+    let errorCss    = Bulma.``is-danger``
+
+    let css, icon =
+        match textField.ErrorMessage = "" with
+        | true -> [successCss], successIcon
+        | false -> [errorCss], errorIcon
 
     let readOnly = if textField.Readonly then [ _disabled_ ] else []
 
@@ -24,8 +55,7 @@ let textFieldComponent (textField:TextField) : XmlNode  =
                     _title_            textField.Name
                     _value_            textField.Value
                     _type_             "Text"
-
-                    _classes_          [ Bulma.input; Bulma.``is-small`` ] // @ cssClass
+                    _classes_          ([ Bulma.input; Bulma.``is-small`` ] @ css)
                 ]
                 @
                 readOnly
@@ -35,13 +65,8 @@ let textFieldComponent (textField:TextField) : XmlNode  =
                 _id_  $"{textField.Id}_validation_icon"
                 _classes_ [ Bulma.icon; Bulma.``is-right``; Bulma.``is-small`` ]
             ] [
-                _text emptySpaceIcon
+                _text icon
             ]
-            _p [
-                _id_  $"{textField.Id}_validation_message"
-                _class_ Bulma.help
-            ] [
-                _text emptySpaceIcon
-            ]
+            _validationErrorMessageFor textField.Id textField.ErrorMessage
         ]
     ]

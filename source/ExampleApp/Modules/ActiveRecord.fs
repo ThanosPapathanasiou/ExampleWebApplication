@@ -20,7 +20,7 @@ type ActiveRecord() =
 let getTableName<'T when 'T :> ActiveRecord> : string = typeof<'T>.GetCustomAttribute<TableAttribute>().Name 
 
 /// Get non-database generated columns
-let getColumnMembers<'T when 'T :> ActiveRecord> (record: 'T) : (string * obj) array =
+let getFieldsThatAreStoredInDatabase<'T when 'T :> ActiveRecord> (record: 'T) : (string * obj) array =
     typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
     |> Array.filter (fun prop -> prop.GetCustomAttribute<DatabaseGeneratedAttribute>() = null)
     |> Array.filter (fun prop -> prop.GetCustomAttribute<ColumnAttribute>() <> null)
@@ -31,7 +31,7 @@ let getColumnMembers<'T when 'T :> ActiveRecord> (record: 'T) : (string * obj) a
 // DATABASE FUNCTIONS
 
 let createRecord<'T when 'T :> ActiveRecord> (conn: IDbConnection) (record: 'T) : 'T =
-    let tableName = typeof<'T>.GetCustomAttribute<TableAttribute>().Name
+    let tableName = getTableName<'T>
 
     // Get properties with Column attributes, excluding DatabaseGenerated identity properties
     let properties = 
@@ -123,6 +123,52 @@ let readRecords<'T when 'T :> ActiveRecord> (conn: IDbConnection) : seq<'T> =
 
     // Execute the query using Dapper
     conn.Query<'T>(sql)
+
+let updateRecord<'T when 'T :> ActiveRecord> (conn: IDbConnection) (record: 'T) : 'T =
+    let tableName = getTableName<'T>
+
+    // Get properties with Column attributes, excluding DatabaseGenerated identity properties
+    let properties = 
+        typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+        |> Array.filter (fun p -> 
+            let columnAttr = p.GetCustomAttribute<ColumnAttribute>()
+            let dbGenAttr = p.GetCustomAttribute<DatabaseGeneratedAttribute>()
+            columnAttr <> null && 
+            (dbGenAttr = null || dbGenAttr.DatabaseGeneratedOption <> DatabaseGeneratedOption.Identity))
+
+    let idProp = 
+        typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+        |> Array.find (fun p -> 
+            let dbGenAttr = p.GetCustomAttribute<DatabaseGeneratedAttribute>()
+            dbGenAttr <> null && dbGenAttr.DatabaseGeneratedOption = DatabaseGeneratedOption.Identity)
+
+    let idColumnName = idProp.GetCustomAttribute<ColumnAttribute>().Name
+
+    // Get column names and parameter names for SET clause
+    let setClause = 
+        properties 
+        |> Array.map (fun p -> $"{p.GetCustomAttribute<ColumnAttribute>().Name} = @{p.Name}")
+        |> String.concat ", "
+
+    // Get all column names for the RETURNING clause
+    let allColumnNames = 
+        typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+        |> Array.filter (fun p -> p.GetCustomAttribute<ColumnAttribute>() <> null) 
+        |> Array.map _.GetCustomAttribute<ColumnAttribute>().Name
+        |> String.concat ", "
+
+    // Build the SQL UPDATE statement with RETURNING clause
+    let sql = $"UPDATE {tableName} SET {setClause} WHERE {idColumnName} = @Id RETURNING {allColumnNames}"
+
+    // Create a dynamic parameter object
+    let parameters = DynamicParameters()
+    for prop in properties do
+        let value = prop.GetValue(record)
+        parameters.Add(prop.Name, value)
+    parameters.Add("Id", idProp.GetValue(record))
+
+    // Execute the query and return the updated record
+    conn.QueryFirst<'T>(sql, parameters)
 
 // HTTP FUNCTIONS
 

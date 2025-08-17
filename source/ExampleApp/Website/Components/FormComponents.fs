@@ -1,5 +1,6 @@
 ﻿module ExampleApp.Website.Components.FormComponents
 
+open System.ComponentModel.DataAnnotations
 open System.Data
 open System.Threading.Tasks
 open ExampleApp.Website.Components.TextFieldComponent
@@ -17,27 +18,46 @@ open ExampleApp.Website.Base
 
 // Generic functions to enable you to create a crud endpoints/views that work with an Active Model class
 
-let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly: bool) =
-    getColumnMembers record
-        |> Array.map (fun (column, value) ->
+let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly: bool) (validations: ValidationResult seq)=
+    let errorMessages = 
+        validations
+        |> Seq.toArray
+        |> Array.groupBy (fun r -> r.MemberNames |> Seq.head)
+        |> Array.map (fun (key, group) -> key, group.[0].ErrorMessage)
+        |> Map.ofArray
+    
+    let getErrorMessage field = 
+        Map.tryFind field errorMessages |> Option.defaultValue ""
+        
+    getFieldsThatAreStoredInDatabase record
+        |> Array.map (fun (field, value) ->
             match value with
-            | :? string as strValue -> textFieldComponent { Id=column; Label=column; Name=column; Value = strValue; Readonly = isReadonly }
             // TODO: handle other types of data
-            | _ -> failwith "unhandled type"            
+            | :? string as strValue ->
+                textFieldComponent
+                    {
+                        Id=field.ToLowerInvariant()
+                        Label=field
+                        Name=field
+                        Value = strValue
+                        Readonly = isReadonly
+                        ErrorMessage=getErrorMessage field
+                    }
+            | _ -> failwith "unhandled type"
         )
         |> Array.toList
 
 let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
-    let title = getTableName<'T>
-    let baseUrl = title.ToLowerInvariant()
-    let editUrl = $"/{baseUrl}/{record.Id}/edit"
-    let formFields = getFormFieldsFromRecord<'T> record true
+    let recordName' = getTableName<'T>
+    let recordName  = recordName'.ToLowerInvariant()
+    let editUrl     = $"/{recordName}/{record.Id}/edit"
+    let formFields  = getFormFieldsFromRecord<'T> record true []
     
     _div [
         _class_ Bulma.box
     ] (
         [
-            _h2 [ _class_ Bulma.title ] [ _text title ]
+            _h2 [ _class_ Bulma.title ] [ _text recordName' ]
         ]
         @
         formFields
@@ -47,7 +67,7 @@ let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
                 _div [ _class_ Bulma.control ] [
                     _button [
                         _classes_ [ Bulma.button; Bulma.``is-link``; ]
-                        Hx.get $"/{baseUrl}"
+                        Hx.get $"/{recordName}"
                         _hxTarget_ "main"
                         Hx.pushUrlOn
                         Hx.swapOuterHtml
@@ -72,11 +92,13 @@ let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
 
 let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
     
-    let tableName = getTableName<'T>
-    let baseUrl   = tableName.ToLowerInvariant()
-    let submitUrl = $"/{baseUrl}/{record.Id}"
-    let cancelUrl = $"/{baseUrl}/{record.Id}/view"
-    let formFields = getFormFieldsFromRecord<'T> record false
+    let recordName' = getTableName<'T>
+    let recordName  = recordName'.ToLowerInvariant()
+    let submitUrl   = $"/{recordName}/{record.Id}"
+    let cancelUrl   = $"/{recordName}/{record.Id}/view"
+    let validations = validateRecord<'T> record
+    let formFields  = getFormFieldsFromRecord<'T> record false validations
+
     
     _form [
         _class_ Bulma.box
@@ -85,7 +107,7 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
         Hx.targetCss ("." + Bulma.box)
     ] (
         [
-            _h2 [ _class_ Bulma.title ] [ _text tableName ]
+            _h2 [ _class_ Bulma.title ] [ _text recordName' ]
             Xsrf.antiforgeryInput token
         ]
         @
@@ -98,7 +120,7 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
                         _classes_ [ Bulma.button; Bulma.``is-link``; Bulma.``is-danger`` ]
                         Hx.get cancelUrl
                         Hx.targetCss ("." + Bulma.box)
-                        Hx.pushUrl $"/{baseUrl}/{record.Id}"
+                        Hx.pushUrl $"/{recordName}/{record.Id}"
                         Hx.swapOuterHtml
                     ] [
                         _text "Cancel"
@@ -112,6 +134,9 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
                         _text "Submit"
                     ]
                 ]
+            ]
+            _div [ _id_ $"{recordName}_validation_results" ] [
+                
             ]
         ])
 
@@ -145,18 +170,27 @@ let ``PUT /model/id``<'T when 'T :> ActiveRecord>
         let model = getRecordFromHttpRequest<'T> ctx.Request
         let validations = validateRecord<'T> model
 
-        let partialView ctx = 
-            match validations.Length with
-            | 0 -> successPartialView 
-            | _ -> failedPartialView (Xsrf.getToken ctx) 
-        
-        let view  =
-            if isHtmxRequest ctx then
-                partialView ctx model
-            else
-                partialView ctx model |> childView |> parentView
-        
-        return! Response.ofHtml view ctx
+        if validations.Length <> 0 then
+            let view  =
+                if isHtmxRequest ctx then
+                    failedPartialView (Xsrf.getToken ctx)  model
+                else
+                    failedPartialView (Xsrf.getToken ctx)  model |> childView |> parentView
+            
+            return! Response.ofHtml view ctx    
+        else
+            
+            // TODO: url encode the values
+            use conn  = ctx.Plug<IDbConnection>()
+            let updatedModel = updateRecord<'T> conn model
+            
+            let view  =
+                if isHtmxRequest ctx then
+                    successPartialView updatedModel
+                else
+                    successPartialView updatedModel |> childView |> parentView
+            
+            return! Response.ofHtml view ctx
     }
 
 let ``GET /model/id``<'T when 'T :> ActiveRecord>
@@ -221,6 +255,22 @@ let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
     
     Response.ofHtmlCsrf view ctx    
 
+// // TODO: implement validate on tab-off on every field or when the user stops typing 
+// let ``GET /model/id/validate``<'T when 'T :> ActiveRecord>
+//     (ctx: HttpContext)
+//     : Task =
+//
+//     use conn = ctx.Plug<IDbConnection>()
+//
+//     let model = getRecordFromHttpRequest<'T> ctx.Request
+//     let validationResults = validateRecord<'T> model
+//     let validations = 
+//         _div [] [
+//             _validationErrorMessageFor "Email"
+//         ]    
+//     
+//     Response.ofHtml validations ctx
+
 let getEndpointListForType<'T when 'T :> ActiveRecord>
     (getSingle_ChildView: XmlNode -> XmlNode )
     (getAll_ChildView:  'T seq -> XmlNode )
@@ -229,15 +279,15 @@ let getEndpointListForType<'T when 'T :> ActiveRecord>
     let model = getTableName<'T>.ToLowerInvariant()
     
     [
-        get  $"/{model}"                     ( fun ctx -> ``GET /model``<'T>         ctx                                       getAll_ChildView    parentView )
-        get  $"/{model}/{{id:int}}"          ( fun ctx -> ``GET /model/id``<'T>      ctx view_FormComponent                    getSingle_ChildView parentView )
-        put  $"/{model}/{{id:int}}"          ( fun ctx -> ``PUT /model/id``<'T>      ctx view_FormComponent edit_FormComponent getSingle_ChildView parentView )
-        get  $"/{model}/{{id:int}}/view"     ( fun ctx -> ``GET /model/id/view``<'T> ctx view_FormComponent                    getSingle_ChildView parentView )
-        get  $"/{model}/{{id:int}}/edit"     ( fun ctx -> ``GET /model/id/edit``<'T> ctx edit_FormComponent                    getSingle_ChildView parentView )
+        get   $"/{model}"                       ( fun ctx -> ``GET /model``<'T>         ctx                                       getAll_ChildView    parentView )
+        get   $"/{model}/{{id:int}}"            ( fun ctx -> ``GET /model/id``<'T>      ctx view_FormComponent                    getSingle_ChildView parentView )
+        put   $"/{model}/{{id:int}}"            ( fun ctx -> ``PUT /model/id``<'T>      ctx view_FormComponent edit_FormComponent getSingle_ChildView parentView )
+        get   $"/{model}/{{id:int}}/view"       ( fun ctx -> ``GET /model/id/view``<'T> ctx view_FormComponent                    getSingle_ChildView parentView )
+        get   $"/{model}/{{id:int}}/edit"       ( fun ctx -> ``GET /model/id/edit``<'T> ctx edit_FormComponent                    getSingle_ChildView parentView )
+        // post  $"/{model}/{{id:int}}/validate" ( fun ctx -> ``GET /model/id/validate``<'T> ctx )
         
         
         // TODO: add missing DEL  /model/id          endpoint
-        // TODO: add missing POST /model/id/validate endpoint 
         // TODO: add missing GET  /model/new         endpoint
         // TODO: add missing POST /model             endpoint
     ]
