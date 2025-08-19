@@ -1,8 +1,6 @@
 ﻿module ExampleApp.Website.Routes
 
 open System
-open ExampleApp.Website.Components.FormComponents
-open ExampleApp.Website.ParentView
 open Falco
 open Falco.Routing
 open ExampleApp.Website.Posts
@@ -30,8 +28,5 @@ let mainMenuEndpoints = [
 
 let websiteEndpoints =
     mainMenuEndpoints @
-    
-    // hook up the 'Post' endpoints
-    (getEndpointListForType<Post> multiPostView parentView) @
-    
+    postEndpoints @
     healthCheckEndpoints

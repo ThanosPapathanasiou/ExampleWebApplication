@@ -9,6 +9,8 @@ open Falco.Markup
 
 open Modules.ActiveRecord
 open ExampleApp.Website.Base
+open ExampleApp.Website.Components.FormComponents
+open ExampleApp.Website.ParentView
 
 // ----- Model -----
 
@@ -61,3 +63,7 @@ let multiPostView (posts: Post seq): XmlNode =
             ]
         ]
     ]
+    
+// ----- Endpoints -----
+let postEndpoints = getEndpointListForType<Post> multiPostView parentView
+
