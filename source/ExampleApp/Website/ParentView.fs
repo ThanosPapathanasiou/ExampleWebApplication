@@ -7,7 +7,7 @@ open Falco.Markup
 /// Creates the html XmlNode that we pass to Falco to be returned to the browser.
 /// Accepts 'content' for a child page. The content should be a `main [] []` element. 
 let parentView (content: XmlNode) : XmlNode =
-    
+
     /// creates a navbarItem `a` element
     let _navbarItem (text:string) (link:string) (icon:string): XmlNode  =
         let id = text.Replace(" ", "-").ToLowerInvariant()

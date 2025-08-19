@@ -140,6 +140,15 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
             ]
         ])
 
+let getSingle_ChildView partialView : XmlNode =
+    _main [ _classes_ [ Bulma.container; ] ] [
+        _section [ ] [
+            _div [ _class_ Bulma.container ] [
+               partialView
+            ]
+        ]
+    ]
+
 let ``GET /model``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
     (childView: 'T seq   -> XmlNode)
@@ -271,8 +280,12 @@ let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
 //     
 //     Response.ofHtml validations ctx
 
+/// <summary>
+/// This function will return a list of endpoints that handle CRUD operations for your active record of type `'T` 
+/// </summary>
+/// <param name="getAll_ChildView">This is the view that will show off a list of `'T`. It is a child view, meaning the base XmlNode must be `main`.</param>
+/// <param name="parentView">This is the base view of your entire website. The base XmlNode has to be `html`.</param>
 let getEndpointListForType<'T when 'T :> ActiveRecord>
-    (getSingle_ChildView: XmlNode -> XmlNode )
     (getAll_ChildView:  'T seq -> XmlNode )
     (parentView: XmlNode -> XmlNode ) : HttpEndpoint list =
     
@@ -290,4 +303,5 @@ let getEndpointListForType<'T when 'T :> ActiveRecord>
         // TODO: add missing DEL  /model/id          endpoint
         // TODO: add missing GET  /model/new         endpoint
         // TODO: add missing POST /model             endpoint
+        // TODO: add pagination support for /model
     ]

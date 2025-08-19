@@ -28,10 +28,10 @@ type Post() =
     [<Required>]
     member val Body : string = "" with get, set  
 
-
 // ----- Views -----
 
 let multiPostView (posts: Post seq): XmlNode =
+    let baseUrl = getTableName<Post>.ToLowerInvariant()
     _main [ _class_ Bulma.container ] [
         _section [ ] [
             _h1 [ _class_ Bulma.title ] [ _text "My latest posts!" ]
@@ -50,7 +50,7 @@ let multiPostView (posts: Post seq): XmlNode =
                                     _br []
                                     _small [] [
                                         _a [
-                                           Hx.get $"/posts/{post.Id}"
+                                           Hx.get $"/{baseUrl}/{post.Id}"
                                            Hx.pushUrlOn
                                            Hx.swapOuterHtml
                                            _hxTarget_ "main"
@@ -64,14 +64,5 @@ let multiPostView (posts: Post seq): XmlNode =
         ]
     ]
 
-let singlePostView partialView : XmlNode =
-    _main [ _classes_ [ Bulma.container; ] ] [
-        _section [ ] [
-            _div [ _class_ Bulma.container ] [
-               partialView
-            ]
-        ]
-    ]
-
 // ----- Routes -----
-let postEndpoints = getEndpointListForType<Post> singlePostView multiPostView parentView
+let postEndpoints = getEndpointListForType<Post> multiPostView parentView
