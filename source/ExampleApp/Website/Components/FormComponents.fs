@@ -153,8 +153,8 @@ let ``GET /model``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
     (childView: 'T seq   -> XmlNode)
     (parentView: XmlNode -> XmlNode)
-    : Task = 
-      
+    : Task =
+
     use conn  = ctx.Plug<IDbConnection>()
     let model = conn |> readRecords<'T>  |> Seq.truncate 5 |> Seq.toArray
 
@@ -174,6 +174,8 @@ let ``PUT /model/id``<'T when 'T :> ActiveRecord>
     (parentView: XmlNode -> XmlNode)
     : Task =
     task {
+        use conn  = ctx.Plug<IDbConnection>()
+        
         // TODO: validate antiforgery token
         
         let model = getRecordFromHttpRequest<'T> ctx.Request
@@ -190,7 +192,6 @@ let ``PUT /model/id``<'T when 'T :> ActiveRecord>
         else
             
             // TODO: url encode the values
-            use conn  = ctx.Plug<IDbConnection>()
             let updatedModel = updateRecord<'T> conn model
             
             let view  =
