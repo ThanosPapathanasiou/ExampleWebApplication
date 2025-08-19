@@ -6,7 +6,7 @@ This project is an attempt to make CRUD applications easy for .net
 
 The inspiration came from this meme:
 
-![img.png](/readme/img.png)
+![dbtohtml.png](dbtohtml.png)
 
 Using the application, you should be able to create simple CRUD functionality for a given model as follows:
 
