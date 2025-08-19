@@ -47,7 +47,9 @@ let main args =
         .UseRouting()
         .UseFalco(websiteEndpoints)
         .UseFalcoNotFound(notFoundHandler)
-        
+
+    // TODO: in development mode add some initial data.
+           
     app.Run()
 
     0 // Exit code
