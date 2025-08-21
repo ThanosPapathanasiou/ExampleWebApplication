@@ -27,11 +27,13 @@ type Post() =
 
     [<Column("Title")>]
     [<DisplayName("Title")>]
+    [<TextFieldComponent>]
     [<Required>]
     member val Title : string = "" with get, set
 
     [<Column("Body")>]
     [<DisplayName("Body")>]
+    [<TextAreaFieldComponent>]
     [<Required>]
     member val Body : string = "" with get, set  
 ```

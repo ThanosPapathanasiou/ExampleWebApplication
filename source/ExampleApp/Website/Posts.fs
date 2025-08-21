@@ -4,13 +4,13 @@ open System.ComponentModel
 open System.ComponentModel.DataAnnotations
 open System.ComponentModel.DataAnnotations.Schema
 
+open ExampleApp.Website.ParentView
 open Falco.Htmx
 open Falco.Markup
 
 open Modules.ActiveRecord
 open ExampleApp.Website.Base
-open ExampleApp.Website.Components.FormComponents
-open ExampleApp.Website.ParentView
+open ExampleApp.Website.Components.CrudFormComponents
 
 // ----- Model -----
 
@@ -20,11 +20,13 @@ type Post() =
 
     [<Column("Title")>]
     [<DisplayName("Title")>]
+    [<TextFieldComponent>]
     [<Required>]
     member val Title : string = "" with get, set
 
     [<Column("Body")>]
     [<DisplayName("Body")>]
+    [<TextAreaFieldComponent>]
     [<Required>]
     member val Body : string = "" with get, set  
 

@@ -19,15 +19,6 @@ type ActiveRecord() =
 
 let getTableName<'T when 'T :> ActiveRecord> : string = typeof<'T>.GetCustomAttribute<TableAttribute>().Name 
 
-/// Get non-database generated columns
-let getFieldsThatAreStoredInDatabase<'T when 'T :> ActiveRecord> (record: 'T) : (string * obj) array =
-    typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
-    |> Array.filter (fun prop -> prop.GetCustomAttribute<DatabaseGeneratedAttribute>() = null)
-    |> Array.filter (fun prop -> prop.GetCustomAttribute<ColumnAttribute>() <> null)
-    |> Array.map (fun prop -> 
-        let columnAttr = prop.GetCustomAttribute<ColumnAttribute>()
-        columnAttr.Name, prop.GetValue(record))
-
 // DATABASE FUNCTIONS
 
 let createRecord<'T when 'T :> ActiveRecord> (conn: IDbConnection) (record: 'T) : 'T =
