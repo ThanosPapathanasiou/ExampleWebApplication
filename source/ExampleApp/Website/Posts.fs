@@ -32,13 +32,13 @@ type Post() =
     
     [<Column("Type")>]
     [<DisplayName("Type")>]
-    [<StaticDropdownFieldComponent("Personal", "Technical")>]
+    [<StaticDropdownComponent("Personal", "Technical")>]
     [<Required>]
     member val Type : string = "" with get, set
 
     [<Column("Body")>]
     [<DisplayName("Body")>]
-    [<TextAreaFieldComponent>]
+    [<TextAreaComponent>]
     [<Required>]
     member val Body : string = "" with get, set
 

@@ -59,44 +59,44 @@ let _validationErrorMessageFor (fieldId: string) (errorMessage: string) =
 type TextFieldComponentAttribute() =
     inherit ComponentAttribute()
 
-type TextField = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
+type TextFieldComponentSettings = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
 
-let textFieldComponent (textField:TextField) : XmlNode  =
+let textFieldComponent (settings : TextFieldComponentSettings) : XmlNode  =
     let successIcon = "✔"
     let successCss  = Bulma.``is-success``
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
 
     let css, icon =
-        match textField.ErrorMessage = "" with
+        match settings.ErrorMessage = "" with
         | true -> [successCss], successIcon
         | false -> [errorCss], errorIcon
 
-    let readOnly = if textField.Readonly then [ _disabled_ ] else []
+    let readOnly = if settings.Readonly then [ _disabled_ ] else []
 
     _div [ _classes_ [ Bulma.field ] ] [
-        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _textEnc textField.Label ]
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ settings.Id ] [ _textEnc settings.Label ]
         _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
             _input (
                 [
-                    _id_               textField.Id
-                    _name_             textField.Name
-                    _title_            textField.Name
-                    _value_            (textField.Value |> WebUtility.HtmlEncode)
-                    _type_             "Text"
-                    _classes_          ([ Bulma.input; Bulma.``is-small`` ] @ css)
+                    _id_      settings.Id
+                    _name_    settings.Name
+                    _title_   settings.Name
+                    _value_   (settings.Value |> WebUtility.HtmlEncode)
+                    _type_    "Text"
+                    _classes_ ([ Bulma.input; Bulma.``is-small`` ] @ css)
                 ]
                 @
                 readOnly
             )
             
             _span [
-                _id_  $"{textField.Id}_validation_icon"
+                _id_  $"{settings.Id}_validation_icon"
                 _classes_ [ Bulma.icon; Bulma.``is-right``; Bulma.``is-small`` ]
             ] [
                 _text icon
             ]
-            _validationErrorMessageFor textField.Id textField.ErrorMessage
+            _validationErrorMessageFor settings.Id settings.ErrorMessage
         ]
     ]
 
@@ -105,45 +105,45 @@ let textFieldComponent (textField:TextField) : XmlNode  =
 // ----- ---------------------- -----
 
 [<AttributeUsage(AttributeTargets.Property)>]
-type TextAreaFieldComponentAttribute() =
+type TextAreaComponentAttribute() =
     inherit ComponentAttribute()
 
-type TextAreaField = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
+type TextAreaComponentSettings = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
 
-let textAreaFieldComponent (textField:TextAreaField) : XmlNode  =
+let textAreaComponent (settings : TextAreaComponentSettings) : XmlNode  =
     let successIcon = "✔"
     let successCss  = Bulma.``is-success``
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
 
     let css, icon =
-        match textField.ErrorMessage = "" with
+        match settings.ErrorMessage = "" with
         | true -> [successCss], successIcon
         | false -> [errorCss], errorIcon
 
-    let readOnly = if textField.Readonly then [ _disabled_ ] else []
+    let readOnly = if settings.Readonly then [ _disabled_ ] else []
 
     _div [ _classes_ [ Bulma.field ] ] [
-        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _textEnc textField.Label ]
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ settings.Id ] [ _textEnc settings.Label ]
         _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
             _textarea (
                 [
-                    _id_               textField.Id
-                    _name_             textField.Name
-                    _title_            textField.Name
+                    _id_               settings.Id
+                    _name_             settings.Name
+                    _title_            settings.Name
                     _classes_          ([ Bulma.textarea; Bulma.``is-small`` ] @ css)
                 ]
                 @
                 readOnly
-            ) [ _textEnc textField.Value ]
+            ) [ _textEnc settings.Value ]
             
             _span [
-                _id_  $"{textField.Id}_validation_icon"
+                _id_  $"{settings.Id}_validation_icon"
                 _classes_ [ Bulma.icon; Bulma.``is-right``; Bulma.``is-small`` ]
             ] [
                 _text icon
             ]
-            _validationErrorMessageFor textField.Id textField.ErrorMessage
+            _validationErrorMessageFor settings.Id settings.ErrorMessage
         ]
     ]
 
@@ -152,50 +152,50 @@ let textAreaFieldComponent (textField:TextAreaField) : XmlNode  =
 // ----- ---------------------------- -----
 
 [<AttributeUsage(AttributeTargets.Property)>]
-type StaticDropdownFieldComponentAttribute([<ParamArray>] options: string array) =
+type StaticDropdownComponentAttribute([<ParamArray>] options: string array) =
     inherit ComponentAttribute()
     member _.Options = options
 
-type StaticDropdownField = { Id: string; Label: string; Name: string; Value: string; DropdownOptions: string array; Readonly: bool; ErrorMessage: string }
+type StaticDropdownSettings = { Id: string; Label: string; Name: string; Value: string; DropdownOptions: string array; Readonly: bool; ErrorMessage: string }
 
-let staticDropdownFieldComponent (textField:StaticDropdownField) : XmlNode  =
+let staticDropdownFieldComponent (settings : StaticDropdownSettings) : XmlNode  =
     let successIcon = "✔"
     let successCss  = Bulma.``is-success``
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
 
     let css, icon =
-        match textField.ErrorMessage = "" with
+        match settings.ErrorMessage = "" with
         | true -> [successCss], successIcon
         | false -> [errorCss], errorIcon
 
-    let readOnly = if textField.Readonly then [ _disabled_ ] else []
+    let readOnly = if settings.Readonly then [ _disabled_ ] else []
     
     let dropdownOptions =
-        textField.DropdownOptions
+        settings.DropdownOptions
         |> Array.map (fun t ->
-            let selected = if textField.Value = t then [ _selected_ ] else [] 
+            let selected = if settings.Value = t then [ _selected_ ] else [] 
             _option ([ _value_ t ]@selected) [ _textEnc t ])
         |> Array.toList
     
     _div [ _classes_ [ Bulma.field ] ] [
-        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _textEnc textField.Label ]
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ settings.Id ] [ _textEnc settings.Label ]
         _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
             _select ([
-                _id_      textField.Id
-                _name_    textField.Name
-                _title_   textField.Name
+                _id_      settings.Id
+                _name_    settings.Name
+                _title_   settings.Name
                 _classes_ ([ Bulma.input; Bulma.``is-small`` ] @ css)
             ]@readOnly) dropdownOptions
 
             _span [
-                _id_  $"{textField.Id}_validation_icon"
+                _id_  $"{settings.Id}_validation_icon"
                 _classes_ [ Bulma.icon; Bulma.``is-right``; Bulma.``is-small`` ]
             ] [
                 _text icon
             ]
 
-            _validationErrorMessageFor textField.Id textField.ErrorMessage
+            _validationErrorMessageFor settings.Id settings.ErrorMessage
         ]
     ]
 
@@ -218,8 +218,8 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Readonly = isReadonly
                 ErrorMessage = errorMessage
             }
-    | :? TextAreaFieldComponentAttribute ->
-        textAreaFieldComponent
+    | :? TextAreaComponentAttribute ->
+        textAreaComponent
             {
                 Id = columnName.ToLowerInvariant()
                 Name = columnName
@@ -228,8 +228,8 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Readonly = isReadonly
                 ErrorMessage = errorMessage
             }
-    | :? StaticDropdownFieldComponentAttribute ->
-        let options = prop.GetCustomAttribute<StaticDropdownFieldComponentAttribute>().Options
+    | :? StaticDropdownComponentAttribute ->
+        let options = prop.GetCustomAttribute<StaticDropdownComponentAttribute>().Options
         staticDropdownFieldComponent
             {
                 Id = columnName.ToLowerInvariant()
@@ -240,9 +240,8 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Readonly = isReadonly
                 ErrorMessage = errorMessage
             }
-    // TODO: handle other attributes
-    // TODO: create unit test that will enforce that each active model record has correct attributes (i.e. each column also has a textfield or dropdown attribute)             
-    //| :? StaticDropdownComponentAttribute -> "StaticDropdown"
+    // TODO: handle other types of components
+    // TODO: create unit test that will enforce that the following exception never happens.              
     | _ -> raise (ArgumentException "Invalid ComponentAttribute")
 
 let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly: bool) (validationResults: ValidationResult seq)=
