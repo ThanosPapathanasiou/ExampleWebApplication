@@ -99,9 +99,9 @@ let textFieldComponent (textField:TextField) : XmlNode  =
         ]
     ]
 
-// ----- ------------------ -----
+// ----- ---------------------- -----
 // ----- TextAreaFieldComponent -----
-// ----- ------------------ -----
+// ----- ---------------------- -----
 
 [<AttributeUsage(AttributeTargets.Property)>]
 type TextAreaFieldComponentAttribute() =
@@ -146,6 +146,58 @@ let textAreaFieldComponent (textField:TextAreaField) : XmlNode  =
         ]
     ]
 
+// ----- ---------------------------- -----
+// ----- StaticDropdownFieldComponent -----
+// ----- ---------------------------- -----
+
+[<AttributeUsage(AttributeTargets.Property)>]
+type StaticDropdownFieldComponentAttribute([<ParamArray>] options: string array) =
+    inherit ComponentAttribute()
+    member _.Options = options
+
+type StaticDropdownField = { Id: string; Label: string; Name: string; Value: string; DropdownOptions: string array; Readonly: bool; ErrorMessage: string }
+
+let staticDropdownFieldComponent (textField:StaticDropdownField) : XmlNode  =
+    let successIcon = "✔"
+    let successCss  = Bulma.``is-success``
+    let errorIcon   = "⚠"
+    let errorCss    = Bulma.``is-danger``
+
+    let css, icon =
+        match textField.ErrorMessage = "" with
+        | true -> [successCss], successIcon
+        | false -> [errorCss], errorIcon
+
+    let readOnly = if textField.Readonly then [ _disabled_ ] else []
+    
+    let dropdownOptions =
+        textField.DropdownOptions
+        |> Array.map (fun t ->
+            let selected = if textField.Value = t then [ _selected_ ] else [] 
+            _option ([ _value_ t ]@selected) [ _text t ])
+        |> Array.toList
+    
+    _div [ _classes_ [ Bulma.field ] ] [
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _text textField.Label ]
+        _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
+            _select ([
+                _id_      textField.Id
+                _name_    textField.Name
+                _title_   textField.Name
+                _classes_ ([ Bulma.input; Bulma.``is-small`` ] @ css)
+            ]@readOnly) dropdownOptions
+
+            _span [
+                _id_  $"{textField.Id}_validation_icon"
+                _classes_ [ Bulma.icon; Bulma.``is-right``; Bulma.``is-small`` ]
+            ] [
+                _text icon
+            ]
+
+            _validationErrorMessageFor textField.Id textField.ErrorMessage
+        ]
+    ]
+
 
 // ----- FORM COMPONENT GENERIC FUNCTIONS -----
 
@@ -172,6 +224,18 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Name = columnName
                 Label = label
                 Value = value.ToString()
+                Readonly = isReadonly
+                ErrorMessage = errorMessage
+            }
+    | :? StaticDropdownFieldComponentAttribute ->
+        let options = prop.GetCustomAttribute<StaticDropdownFieldComponentAttribute>().Options
+        staticDropdownFieldComponent
+            {
+                Id = columnName.ToLowerInvariant()
+                Name = columnName
+                Label = label
+                Value = value.ToString()
+                DropdownOptions = options
                 Readonly = isReadonly
                 ErrorMessage = errorMessage
             }

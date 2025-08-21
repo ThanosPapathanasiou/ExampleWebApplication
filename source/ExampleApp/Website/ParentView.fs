@@ -17,14 +17,23 @@ let _ariaHidden_   = Attr.create "aria-hidden"
 let _ariaLabel_    = Attr.create "aria-label"
 let _ariaExpanded_ = Attr.create "aria-expanded"
 
+/// <summary>
+/// Every endpoint we have has to account for 2 possibilities.
+/// Either someone called it directly (like refreshing the browser)
+/// Or the call happens via htmx get / post / put / delete commands.
+/// 
+/// If the call is direct then the base view has to be the parentView.
+/// If the call is htmx then you need to decide what view is the correct one.
+/// </summary>
 let inline isHtmxRequest (ctx:Microsoft.AspNetCore.Http.HttpContext) : bool =
     ctx.Request.Headers.ContainsKey "HX-Request" &&
     not (ctx.Request.Headers.ContainsKey "HX-History-Restore-Request") 
 
-
-/// Creates the html XmlNode that we pass to Falco to be returned to the browser.
-/// Accepts 'content' for a child page. The content should be a `main [] []` element. 
-let parentView (content: XmlNode) : XmlNode =
+/// <summary>
+/// This is the base view of your entire website. The base XmlNode must be `html`.
+/// </summary>
+/// <param name="childView">It is a child view, meaning the base XmlNode must be `main`.</param>
+let parentView (childView: XmlNode) : XmlNode =
 
     /// creates a navbarItem `a` element
     let _navbarItem (text:string) (link:string) (icon:string): XmlNode  =
@@ -88,18 +97,19 @@ let parentView (content: XmlNode) : XmlNode =
                         _div [ _class_ Bulma.``navbar-start`` ] [
                             _navbarItem "Home"   "/"       "fa-solid fa-house"
                             _navbarItem "Posts"  "/posts"  "fa-solid fa-message"
+                            // You can add the link to your CRUD examples here
                             _navbarItem "About"  "/about"  "fa-solid fa-people-group"
                         ]
                         _div [ _class_ Bulma.``navbar-end`` ] [
                             _div [ _class_ Bulma.``navbar-item`` ] [
-                                // _darkModeButton
+                                _darkModeButton
                             ]
                         ]
                     ]
                 ]
             ]
 
-            content // content should be main [] []
+            childView
 
             _footer [ _class_ Bulma.footer ; _style_ "margin-top: auto" ] [
                 _div [ _classes_ [ Bulma.content ; Bulma.``has-text-centered``] ] [

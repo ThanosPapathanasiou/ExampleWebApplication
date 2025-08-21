@@ -23,11 +23,24 @@ type Post() =
     [<Required>]
     member val Title : string = "" with get, set
 
+    [<Column("Author")>]
+    [<DisplayName("Author")>]
+    [<TextFieldComponent>]
+    [<EmailAddress>]
+    [<Required>]
+    member val Author : string = "" with get, set
+    
+    [<Column("Type")>]
+    [<DisplayName("Type")>]
+    [<StaticDropdownFieldComponent("Personal", "Technical")>]
+    [<Required>]
+    member val Type : string = "" with get, set
+
     [<Column("Body")>]
     [<DisplayName("Body")>]
     [<TextAreaFieldComponent>]
     [<Required>]
-    member val Body : string = "" with get, set  
+    member val Body : string = "" with get, set
 
 // ----- Views -----
 
