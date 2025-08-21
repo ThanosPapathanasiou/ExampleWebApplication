@@ -47,7 +47,7 @@ let parentView (childView: XmlNode) : XmlNode =
             _span [ _classes_ [ Bulma.icon ; Bulma.``is-small`` ] ] [
                 _i [ _class_ icon; _ariaHidden_ "true"] [  ]
             ]
-            _span [ _class_ Bulma.``ml-1`` ] [ _text text ]
+            _span [ _class_ Bulma.``ml-1`` ] [ _textEnc text ]
         ]
 
     let _darkModeButton = 
@@ -62,13 +62,13 @@ let parentView (childView: XmlNode) : XmlNode =
 """ 
                                         
             ] [
-                _span [ _id_ "dark_mode_text"  ; _class_ Bulma.``ml-1`` ] [ _text "Dark mode" ]
+                _span [ _id_ "dark_mode_text"  ; _class_ Bulma.``ml-1`` ] [ _textEnc "Dark mode" ]
             ]
         ]
 
     _html [ _id_ "html" ; _lang_ "en"; ] [
         _head [] [
-            _title []  [ _text "Example Application" ]
+            _title []  [ _textEnc "Example Application" ]
             _meta [ _charset_ "utf-8" ]
             _meta [ _name_ "viewport"; _content_ "width=device-width, initial-scale=1" ]
 
@@ -114,16 +114,16 @@ let parentView (childView: XmlNode) : XmlNode =
             _footer [ _class_ Bulma.footer ; _style_ "margin-top: auto" ] [
                 _div [ _classes_ [ Bulma.content ; Bulma.``has-text-centered``] ] [
                     _p [] [
-                        _text "Built using:"
-                        _text " " ; _a [ _href_ "https://fsharp.org" ] [ _text "F#" ]
-                        _text " " ; _a [ _href_ "https://www.falcoframework.com" ] [ _text "Falco" ]
-                        _text " " ; _a [ _href_ "https://htmx.org" ] [ _text "Htmx" ]
-                        _text " " ; _a [ _href_ "https://bulma.io" ] [ _text "Bulma" ]
+                        _textEnc "Built using:"
+                        _textEnc " " ; _a [ _href_ "https://fsharp.org" ] [ _textEnc "F#" ]
+                        _textEnc " " ; _a [ _href_ "https://www.falcoframework.com" ] [ _textEnc "Falco" ]
+                        _textEnc " " ; _a [ _href_ "https://htmx.org" ] [ _textEnc "Htmx" ]
+                        _textEnc " " ; _a [ _href_ "https://bulma.io" ] [ _textEnc "Bulma" ]
                     ]
                     _a [
                         _href_ "https://github.com/ThanosPapathanasiou/ExampleWebApplication"
                     ] [
-                        _text "Browse the code"
+                        _textEnc "Browse the code"
                     ]
                 ]
             ]

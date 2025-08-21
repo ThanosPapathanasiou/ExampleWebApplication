@@ -7,8 +7,8 @@ open Falco.Markup
 let childView =
     _main [ _class_ Bulma.container ] [
         _section [ ] [
-            _h1 [ _class_ Bulma.title ] [ _text "About" ]
-            _p [] [ _text
+            _h1 [ _class_ Bulma.title ] [ _textEnc "About" ]
+            _p [] [ _textEnc
                          """
                          An example website built with F#, Falco, HTMX, and Bulma combines a functional-first programming language with a lightweight web framework, a dynamic JavaScript library for interactivity, and a modern CSS framework for styling.
                          Here’s a breakdown of how these technologies work together to create a modern web application, with insights drawn from available resources:

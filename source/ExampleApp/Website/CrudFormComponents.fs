@@ -5,6 +5,7 @@ open System.ComponentModel
 open System.ComponentModel.DataAnnotations
 open System.ComponentModel.DataAnnotations.Schema
 open System.Data
+open System.Net
 open System.Reflection
 open System.Threading.Tasks
 open ExampleApp.Website.ParentView
@@ -47,7 +48,7 @@ let _validationErrorMessageFor (fieldId: string) (errorMessage: string) =
                     put '{errorIcon}' into #{fieldId}_validation_icon
         "
     ] [
-        _text errorMessage
+        _textEnc errorMessage
     ]
 
 // ----- ------------------ -----
@@ -74,14 +75,14 @@ let textFieldComponent (textField:TextField) : XmlNode  =
     let readOnly = if textField.Readonly then [ _disabled_ ] else []
 
     _div [ _classes_ [ Bulma.field ] ] [
-        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _text textField.Label ]
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _textEnc textField.Label ]
         _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
             _input (
                 [
                     _id_               textField.Id
                     _name_             textField.Name
                     _title_            textField.Name
-                    _value_            textField.Value
+                    _value_            (textField.Value |> WebUtility.HtmlEncode)
                     _type_             "Text"
                     _classes_          ([ Bulma.input; Bulma.``is-small`` ] @ css)
                 ]
@@ -123,7 +124,7 @@ let textAreaFieldComponent (textField:TextAreaField) : XmlNode  =
     let readOnly = if textField.Readonly then [ _disabled_ ] else []
 
     _div [ _classes_ [ Bulma.field ] ] [
-        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _text textField.Label ]
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _textEnc textField.Label ]
         _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
             _textarea (
                 [
@@ -134,7 +135,7 @@ let textAreaFieldComponent (textField:TextAreaField) : XmlNode  =
                 ]
                 @
                 readOnly
-            ) [ _text textField.Value ]
+            ) [ _textEnc textField.Value ]
             
             _span [
                 _id_  $"{textField.Id}_validation_icon"
@@ -174,11 +175,11 @@ let staticDropdownFieldComponent (textField:StaticDropdownField) : XmlNode  =
         textField.DropdownOptions
         |> Array.map (fun t ->
             let selected = if textField.Value = t then [ _selected_ ] else [] 
-            _option ([ _value_ t ]@selected) [ _text t ])
+            _option ([ _value_ t ]@selected) [ _textEnc t ])
         |> Array.toList
     
     _div [ _classes_ [ Bulma.field ] ] [
-        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _text textField.Label ]
+        _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ textField.Id ] [ _textEnc textField.Label ]
         _div   [ _classes_ [ Bulma.control; Bulma.``has-icons-right`` ] ] [
             _select ([
                 _id_      textField.Id
@@ -282,7 +283,7 @@ let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
         _class_ Bulma.box
     ] (
         [
-            _h2 [ _class_ Bulma.title ] [ _text recordName' ]
+            _h2 [ _class_ Bulma.title ] [ _textEnc recordName' ]
         ]
         @
         formFields
@@ -297,7 +298,7 @@ let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
                         Hx.pushUrlOn
                         Hx.swapOuterHtml
                     ] [
-                        _text "Back"
+                        _textEnc "Back"
                     ]
                 ]
                 _div [ _class_ Bulma.control ] [
@@ -308,7 +309,7 @@ let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
                         Hx.pushUrlOn
                         Hx.swapOuterHtml
                     ] [
-                        _text "Edit"
+                        _textEnc "Edit"
                     ]
                 ]
             ]
@@ -331,7 +332,7 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
         Hx.targetCss ("." + Bulma.box)
     ] (
         [
-            _h2 [ _class_ Bulma.title ] [ _text recordName' ]
+            _h2 [ _class_ Bulma.title ] [ _textEnc recordName' ]
             Xsrf.antiforgeryInput token
         ]
         @
@@ -347,7 +348,7 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
                         Hx.pushUrl $"/{recordName}/{record.Id}"
                         Hx.swapOuterHtml
                     ] [
-                        _text "Cancel"
+                        _textEnc "Cancel"
                     ]
                 ]
                 _div [ _class_ Bulma.control ] [
@@ -355,7 +356,7 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
                         _classes_ [ Bulma.button; Bulma.``is-link``;  Bulma.``is-success`` ]
                         _typeSubmit_
                     ] [
-                        _text "Submit"
+                        _textEnc "Submit"
                     ]
                 ]
             ]

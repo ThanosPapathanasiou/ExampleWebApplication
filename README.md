@@ -69,7 +69,7 @@ let multiPostView (posts: Post seq): XmlNode =
     let baseUrl = getTableName<Post>.ToLowerInvariant()
     _main [ _class_ Bulma.container ] [
         _section [ ] [
-            _h1 [ _class_ Bulma.title ] [ _text "My latest posts!" ]
+            _h1 [ _class_ Bulma.title ] [ _textEnc "My latest posts!" ]
         ]
         _br []
         _section [ ] [
@@ -89,7 +89,7 @@ let multiPostView (posts: Post seq): XmlNode =
                                            Hx.pushUrlOn
                                            Hx.swapOuterHtml
                                            _hxTarget_ "main"
-                                        ] [ _text "Read more..." ]
+                                        ] [ _textEnc "Read more..." ]
                                     ]
                                 ]
                             ]

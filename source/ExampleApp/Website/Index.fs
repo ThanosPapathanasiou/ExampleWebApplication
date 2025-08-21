@@ -9,7 +9,7 @@ let childView =
     _main [ _class_ Bulma.container ] [
         _section [ _class_ Bulma.hero ] [
             _div [ _class_ Bulma.``hero-body`` ] [
-                _h1 [ _class_ Bulma.title ] [ _text "Example" ]
+                _h1 [ _class_ Bulma.title ] [ _textEnc "Example" ]
                 _p' "An example application using F#, Falco, Htmx and Bulma."
             ]
         ]

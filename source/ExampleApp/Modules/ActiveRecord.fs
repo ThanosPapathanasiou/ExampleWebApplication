@@ -5,6 +5,7 @@ open System.ComponentModel.DataAnnotations
 open System.ComponentModel.DataAnnotations.Schema
 open System.Data
 open System.Reflection
+open System.Web
 open Dapper
 open Microsoft.AspNetCore.Http
 
@@ -174,7 +175,8 @@ let getRecordFromHttpRequest<'T when 'T :> ActiveRecord> (request: HttpRequest) 
             if prop.Name = "Id" then
                 request.RouteValues.["id"].ToString()
             else
-                form.[prop.Name].ToString()
+                form.[prop.Name].ToString() |> HttpUtility.HtmlEncode // prevent XSS attacks
+
         let convertedValue = Convert.ChangeType(value, prop.PropertyType)
         prop.SetValue(instance, convertedValue)
     instance
