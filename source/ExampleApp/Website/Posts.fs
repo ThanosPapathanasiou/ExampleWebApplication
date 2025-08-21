@@ -9,7 +9,6 @@ open Falco.Htmx
 open Falco.Markup
 
 open Modules.ActiveRecord
-open ExampleApp.Website.Base
 open ExampleApp.Website.Components.CrudFormComponents
 
 // ----- Model -----

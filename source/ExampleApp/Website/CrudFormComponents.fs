@@ -7,6 +7,7 @@ open System.ComponentModel.DataAnnotations.Schema
 open System.Data
 open System.Reflection
 open System.Threading.Tasks
+open ExampleApp.Website.ParentView
 open Microsoft.AspNetCore.Antiforgery
 open Microsoft.AspNetCore.Http
 
@@ -17,7 +18,6 @@ open Falco.Htmx
 open Falco.Security
 
 open Modules.ActiveRecord
-open ExampleApp.Website.Base
 
 [<AttributeUsage(AttributeTargets.Property)>]
 type ComponentAttribute() =

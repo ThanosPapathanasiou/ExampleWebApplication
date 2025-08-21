@@ -4,8 +4,6 @@ open ExampleApp.Website.ParentView
 open Falco
 open Falco.Markup
 
-open ExampleApp.Website.Base
-
 let childView =
     _main [ _class_ Bulma.container ] [
         _section [ ] [

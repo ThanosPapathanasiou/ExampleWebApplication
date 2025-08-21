@@ -3,7 +3,6 @@
 open Falco
 open Falco.Markup
 
-open ExampleApp.Website.Base
 open ExampleApp.Website.ParentView
 
 let childView =
