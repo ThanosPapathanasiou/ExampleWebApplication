@@ -20,7 +20,9 @@ Using the application, you should be able to create simple CRUD functionality fo
 
 ```fsharp
 // Creating the model
-// You can use System.ComponentModel.DataAnnotations to validate the model and the frontend will use them!
+// Component Attributes are provided to determine how the frontend will work.
+// TextFieldComponent, TextAreaComponent, StaticDropdownComponent. More to come.
+// You can use System.ComponentModel.DataAnnotations and they will work out of the box.
 [<Table("Posts")>]
 type Post() =
     inherit ActiveRecord()
