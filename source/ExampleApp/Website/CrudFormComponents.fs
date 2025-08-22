@@ -251,7 +251,7 @@ let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly
         validationResults
         |> Seq.toArray
         |> Array.groupBy (fun r -> r.MemberNames |> Seq.head)
-        |> Array.map (fun (key, group) -> key, group.[0].ErrorMessage)
+        |> Array.map (fun (key, group) -> key, group[0].ErrorMessage)
         |> Map.ofArray      
         
       Map.tryFind field errorMessages |> Option.defaultValue ""
@@ -272,7 +272,7 @@ let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly
 // ----- PARTIAL VIEWS -----
 // ----- ------------- -----
 
-let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
+let viewFormComponent_PartialView<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
     let recordName' = getTableName<'T>
     let recordName  = recordName'.ToLowerInvariant()
     let editUrl     = $"/{recordName}/{record.Id}/edit"
@@ -315,7 +315,7 @@ let view_FormComponent<'T when 'T :> ActiveRecord> (record: 'T) : XmlNode =
         ]
     )
 
-let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
+let editFormComponent_PartialView<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
     let recordName' = getTableName<'T>
     let recordName  = recordName'.ToLowerInvariant()
     let submitUrl   = $"/{recordName}/{record.Id}"
@@ -364,13 +364,33 @@ let edit_FormComponent<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode 
             ]
         ])
 
-let getSingle_ChildView partialView : XmlNode =
+let formComponent_ChildView (partialView: XmlNode) : XmlNode =
     _main [ _classes_ [ Bulma.container; ] ] [
         _section [ ] [
             _div [ _class_ Bulma.container ] [
                partialView
             ]
         ]
+    ]
+
+let pagination_ChildView<'T when 'T :> ActiveRecord>
+    (records: 'T seq)
+    (singleView: 'T -> XmlNode)
+    : XmlNode =
+    
+    let title = getTableName<'T>
+    _main [ _class_ Bulma.container ] [
+        _section [ ] [
+            _h1 [ _class_ Bulma.title ] [ _textEnc title ]
+        ]
+        _br []
+        _section [ ] [
+            _div [ _class_ Bulma.container ] [
+                for record in records do
+                    singleView record
+            ]
+        ]
+        // TODO: pagination
     ]
 
 // ----- --------- -----
@@ -381,22 +401,29 @@ let getSingle_ChildView partialView : XmlNode =
 /// This will return a list view of 'T models
 /// </summary>
 /// <param name="ctx">The http context</param>
+/// <param name="singleView"></param>
 /// <param name="childView">This is the view that will show off a list of `'T`. It is a child view, meaning the base XmlNode must be `main`.</param>
 /// <param name="parentView">This is the base view of your entire website. The base XmlNode must be `html`.</param>
 let ``GET /model``<'T when 'T :> ActiveRecord>
     (ctx: HttpContext)
-    (childView: 'T seq   -> XmlNode)
+    (singleView:      'T -> XmlNode)
+    (childView:   'T seq -> ('T -> XmlNode)  -> XmlNode)
     (parentView: XmlNode -> XmlNode)
     : Task =
 
+    // TODO: pagination
+    // get limit and offset and use it for pagination
+        
     use conn  = ctx.Plug<IDbConnection>()
-    let model = conn |> readRecords<'T>  |> Seq.truncate 5 |> Seq.toArray
-
+    let records = conn |> readRecords<'T>  |> Seq.truncate 5 |> Seq.toArray
+    
+    let childView' = childView records singleView
+    
     let fullView =
         if isHtmxRequest ctx then
-           model |> childView 
+           childView'  
         else
-           model |> childView |> parentView
+           childView' |> parentView
     
     Response.ofHtml fullView ctx
 
@@ -547,20 +574,29 @@ let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
 /// <summary>
 /// This function will return a list of endpoints that handle CRUD operations for your active record of type `'T` 
 /// </summary>
-/// <param name="getAll_ChildView">This is the view that will show off a list of `'T`. It is a child view, meaning the base XmlNode must be `main`.</param>
+/// <param name="viewSinglePaginationItem_PartialView">
+/// This is the view that will show off a single `'T` in a list view that supports pagination.
+/// It is a partial view so the main XmlNode can be whatever you want to list. article, div, li, etc.
+/// </param>
 /// <param name="parentView">This is the base view of your entire website. The base XmlNode must be `html`.</param>
 let getEndpointListForType<'T when 'T :> ActiveRecord>
-    (getAll_ChildView:  'T seq -> XmlNode )
+    (viewSinglePaginationItem_PartialView:  'T -> XmlNode )
     (parentView: XmlNode -> XmlNode ) : HttpEndpoint list =
-    
+
+    // This looks complicated but bear with me.
+    // parentView is the base. It is the complete html page. It 'takes' a 'main' html element as input. We call all the 'main' views, _ChildView 
+    // All the _ChildView views go directly in the parentView. There's two of them.
+    // One that shows the T in a paginated view.       -> pagination_ChildView
+    // The other shows the T in a view/edit form view. -> formComponent_ChildView
+        
     let model = getTableName<'T>.ToLowerInvariant()
-    
+
     [
-        get   $"/{model}"                       ( fun ctx -> ``GET /model``<'T>         ctx                                       getAll_ChildView    parentView )
-        get   $"/{model}/{{id:int}}"            ( fun ctx -> ``GET /model/id``<'T>      ctx view_FormComponent                    getSingle_ChildView parentView )
-        put   $"/{model}/{{id:int}}"            ( fun ctx -> ``PUT /model/id``<'T>      ctx view_FormComponent edit_FormComponent getSingle_ChildView parentView )
-        get   $"/{model}/{{id:int}}/view"       ( fun ctx -> ``GET /model/id/view``<'T> ctx view_FormComponent                    getSingle_ChildView parentView )
-        get   $"/{model}/{{id:int}}/edit"       ( fun ctx -> ``GET /model/id/edit``<'T> ctx edit_FormComponent                    getSingle_ChildView parentView )
+        get   $"/{model}"                 ( fun ctx -> ``GET /model``<'T>         ctx viewSinglePaginationItem_PartialView                           pagination_ChildView parentView )
+        get   $"/{model}/{{id:int}}"      ( fun ctx -> ``GET /model/id``<'T>      ctx viewFormComponent_PartialView                               formComponent_ChildView parentView )
+        put   $"/{model}/{{id:int}}"      ( fun ctx -> ``PUT /model/id``<'T>      ctx viewFormComponent_PartialView editFormComponent_PartialView formComponent_ChildView parentView )
+        get   $"/{model}/{{id:int}}/view" ( fun ctx -> ``GET /model/id/view``<'T> ctx viewFormComponent_PartialView                               formComponent_ChildView parentView )
+        get   $"/{model}/{{id:int}}/edit" ( fun ctx -> ``GET /model/id/edit``<'T> ctx editFormComponent_PartialView                               formComponent_ChildView parentView )
         // post  $"/{model}/{{id:int}}/validate" ( fun ctx -> ``GET /model/id/validate``<'T> ctx )
         
         

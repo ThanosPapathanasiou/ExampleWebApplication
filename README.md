@@ -64,37 +64,29 @@ CREATE TABLE Posts (
 ```
 
 ```fsharp
-// Create the multi post view
-let multiPostView (posts: Post seq): XmlNode =
+// Create a view that determines how your Post will show in a list view.
+// It can be whatever html element makes sense for your use case.
+// article, div, li, p, etc
+let singlePostView (post: Post): XmlNode =
     let baseUrl = getTableName<Post>.ToLowerInvariant()
-    _main [ _class_ Bulma.container ] [
-        _section [ ] [
-            _h1 [ _class_ Bulma.title ] [ _textEnc "My latest posts!" ]
-        ]
-        _br []
-        _section [ ] [
-            _div [ _class_ Bulma.container ] [
-                for post in posts ->
-                    _article [ _class_ Bulma.media ] [
-                        _div [ _class_ Bulma.``media-content`` ] [
-                            _div [ _class_ Bulma.content ] [
-                                _p [] [
-                                    _strong [] [ _textEnc post.Title ]
-                                    _br []
-                                    _textEnc post.Body
-                                    _br []
-                                    _small [] [
-                                        _a [
-                                           Hx.get $"/{baseUrl}/{post.Id}"
-                                           Hx.pushUrlOn
-                                           Hx.swapOuterHtml
-                                           _hxTarget_ "main"
-                                        ] [ _textEnc "Read more..." ]
-                                    ]
-                                ]
-                            ]
-                        ]
+
+    _article [ _class_ Bulma.media ] [
+        _div [ _class_ Bulma.``media-content`` ] [
+            _div [ _class_ Bulma.content ] [
+                _p [] [
+                    _strong [] [ _textEnc post.Title ]
+                    _br []
+                    _textEnc post.Body
+                    _br []
+                    _small [] [
+                        _a [
+                           Hx.get $"/{baseUrl}/{post.Id}"
+                           Hx.pushUrlOn
+                           Hx.swapOuterHtml
+                           _hxTarget_ "main"
+                        ] [ _text "Read more..." ]
                     ]
+                ]
             ]
         ]
     ]
@@ -106,7 +98,7 @@ let websiteEndpoints =
     
     // hook up the 'Post' endpoints with all the other endpoints.
     // all the urls will be under /posts/**** where 'posts' comes from the tablename in the model (automatically lowercased)
-    (getEndpointListForType<Post> multiPostView parentView) @
+    (getEndpointListForType<Post> singlePostView parentView) @
     
     healthCheckEndpoints
 ```
