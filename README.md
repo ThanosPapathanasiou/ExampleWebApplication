@@ -22,7 +22,7 @@ Using the application, you should be able to create simple CRUD functionality fo
 // Creating the model
 // Component Attributes are provided to determine how the frontend will work.
 // TextFieldComponent, TextAreaComponent, StaticDropdownComponent. More to come.
-// You can use System.ComponentModel.DataAnnotations and they will work out of the box.
+// You can use System.ComponentModel.DataAnnotations for validations and it work out of the box.
 [<Table("Posts")>]
 type Post() =
     inherit ActiveRecord()
