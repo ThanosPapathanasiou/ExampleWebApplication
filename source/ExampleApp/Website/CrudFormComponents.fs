@@ -555,22 +555,6 @@ let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
     
     Response.ofHtmlCsrf view ctx    
 
-// // TODO: implement validate on tab-off on every field or when the user stops typing 
-// let ``GET /model/id/validate``<'T when 'T :> ActiveRecord>
-//     (ctx: HttpContext)
-//     : Task =
-//
-//     use conn = ctx.Plug<IDbConnection>()
-//
-//     let model = getRecordFromHttpRequest<'T> ctx.Request
-//     let validationResults = validateRecord<'T> model
-//     let validations = 
-//         _div [] [
-//             _validationErrorMessageFor "Email"
-//         ]    
-//     
-//     Response.ofHtml validations ctx
-
 /// <summary>
 /// This function will return a list of endpoints that handle CRUD operations for your active record of type `'T` 
 /// </summary>
@@ -597,11 +581,11 @@ let getEndpointListForType<'T when 'T :> ActiveRecord>
         put   $"/{model}/{{id:int}}"      ( fun ctx -> ``PUT /model/id``<'T>      ctx viewFormComponent_PartialView editFormComponent_PartialView formComponent_ChildView parentView )
         get   $"/{model}/{{id:int}}/view" ( fun ctx -> ``GET /model/id/view``<'T> ctx viewFormComponent_PartialView                               formComponent_ChildView parentView )
         get   $"/{model}/{{id:int}}/edit" ( fun ctx -> ``GET /model/id/edit``<'T> ctx editFormComponent_PartialView                               formComponent_ChildView parentView )
-        // post  $"/{model}/{{id:int}}/validate" ( fun ctx -> ``GET /model/id/validate``<'T> ctx )
         
-        
-        // TODO: add missing DEL  /model/id          endpoint
         // TODO: add missing GET  /model/new         endpoint
         // TODO: add missing POST /model             endpoint
-        // TODO: add pagination support for /model
+        // TODO: add missing DEL  /model/id          endpoint
+        // TODO: add missing POST /model/id/validate endpoint
+
+        // TODO: add pagination support for GET /model
     ]
