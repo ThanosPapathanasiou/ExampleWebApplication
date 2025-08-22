@@ -92,6 +92,11 @@ let singlePostView (post: Post): XmlNode =
             ]
         ]
     ]
+
+// Create the endpoints
+// all the urls will be under /posts/****
+// 'posts' comes from the tablename in the model (automatically lowercased)    
+let postEndpoints = getEndpointListForType<Post> singlePostView parentView
 ```
 
 ```fsharp
@@ -99,8 +104,7 @@ let websiteEndpoints =
     mainMenuEndpoints @
     
     // hook up the 'Post' endpoints with all the other endpoints.
-    // all the urls will be under /posts/**** where 'posts' comes from the tablename in the model (automatically lowercased)
-    (getEndpointListForType<Post> singlePostView parentView) @
+    postEndpoints @
     
     healthCheckEndpoints
 ```
