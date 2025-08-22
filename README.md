@@ -1,6 +1,6 @@
 # Readme
 
-Reference F# application with Falco, Htmx and Bulma
+Reference F# application with Falco, Htmx, hyperscript and Bulma
 
 This project is an attempt to make CRUD applications easy for .net
 
@@ -12,7 +12,7 @@ Using the application, you should be able to create simple CRUD functionality fo
 
 1. Create the model
 2. Create the database migration for that model
-3. Create a 'view' that displays a list of these models
+3. Create a 'view' that displays how this model will look when in a paginated list
 4. Hook everything up
 5. ...
 6. Profit!
