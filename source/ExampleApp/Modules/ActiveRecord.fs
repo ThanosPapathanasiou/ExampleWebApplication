@@ -13,9 +13,16 @@ type ActiveRecord() =
     [<DatabaseGenerated(DatabaseGeneratedOption.Identity)>]
     member val Id : int64 = 0L with get, set
 
-// HELPER FUNCTIONS
-
 let getTableName<'T when 'T :> ActiveRecord> : string = typeof<'T>.GetCustomAttribute<TableAttribute>().Name 
+
+/// <summary>
+/// Validates the record based on its System.ComponentModel validations
+/// </summary>
+let validateRecord<'T when 'T :> ActiveRecord> (record: 'T) : ValidationResult array  =
+    let context = ValidationContext(record)
+    let results = ResizeArray<ValidationResult>()
+    Validator.TryValidateObject(record, context, results, true) |> ignore
+    results.ToArray()
 
 // DATABASE FUNCTIONS
 
@@ -158,10 +165,3 @@ let updateRecord<'T when 'T :> ActiveRecord> (conn: IDbConnection) (record: 'T) 
 
     // Execute the query and return the updated record
     conn.QueryFirst<'T>(sql, parameters)
-
-/// This function will validate the 'T record based on its System.ComponentModel validations
-let validateRecord<'T when 'T :> ActiveRecord> (record: 'T) : ValidationResult array  =
-    let context = ValidationContext(record)
-    let results = ResizeArray<ValidationResult>()
-    Validator.TryValidateObject(record, context, results, true) |> ignore
-    results.ToArray()
