@@ -1,13 +1,10 @@
 ﻿module Modules.ActiveRecord
     
-open System
 open System.ComponentModel.DataAnnotations
 open System.ComponentModel.DataAnnotations.Schema
 open System.Data
 open System.Reflection
-open System.Web
 open Dapper
-open Microsoft.AspNetCore.Http
 
 [<AbstractClass>]
 type ActiveRecord() =
@@ -161,25 +158,6 @@ let updateRecord<'T when 'T :> ActiveRecord> (conn: IDbConnection) (record: 'T) 
 
     // Execute the query and return the updated record
     conn.QueryFirst<'T>(sql, parameters)
-
-// HTTP FUNCTIONS
-
-/// This function takes an IFormCollection and gives you a record of type 'T
-/// You can use it in PUT / POST handlers  
-let getRecordFromHttpRequest<'T when 'T :> ActiveRecord> (request: HttpRequest) : 'T =
-    let form = request.Form
-    let instance = Activator.CreateInstance<'T>()
-    let properties = typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
-    for prop in properties do
-        let value =
-            if prop.Name = "Id" then
-                request.RouteValues.["id"].ToString()
-            else
-                form.[prop.Name].ToString() |> HttpUtility.HtmlEncode // prevent XSS attacks
-
-        let convertedValue = Convert.ChangeType(value, prop.PropertyType)
-        prop.SetValue(instance, convertedValue)
-    instance
 
 /// This function will validate the 'T record based on its System.ComponentModel validations
 let validateRecord<'T when 'T :> ActiveRecord> (record: 'T) : ValidationResult array  =

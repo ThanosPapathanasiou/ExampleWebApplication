@@ -8,6 +8,7 @@ open System.Data
 open System.Net
 open System.Reflection
 open System.Threading.Tasks
+open System.Web
 open ExampleApp.Website.ParentView
 open Microsoft.AspNetCore.Antiforgery
 open Microsoft.AspNetCore.Http
@@ -201,6 +202,22 @@ let staticDropdownFieldComponent (settings : StaticDropdownSettings) : XmlNode  
 
 
 // ----- FORM COMPONENT GENERIC FUNCTIONS -----
+
+/// This function takes an IFormCollection and gives you a record of type 'T
+/// You can use it in PUT / POST handlers  
+let getRecordFromHttpRequest<'T when 'T :> ActiveRecord> (request: HttpRequest) : 'T =
+    let instance = Activator.CreateInstance<'T>()
+    let properties = typeof<'T>.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+    for prop in properties do
+        let value =
+            if prop.Name = "Id" then 
+                request.RouteValues.["id"]
+            else
+                request.Form.[prop.Name].ToString() |> HttpUtility.HtmlEncode :> obj  // prevent XSS attacks
+
+        let convertedValue = Convert.ChangeType(value, prop.PropertyType)
+        prop.SetValue(instance, convertedValue)
+    instance
 
 let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: PropertyInfo) (isReadonly: bool) (errorMessage: string) = 
     let columnName = prop.GetCustomAttribute<ColumnAttribute>().Name
