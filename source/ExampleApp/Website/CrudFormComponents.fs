@@ -9,7 +9,6 @@ open System.Net
 open System.Reflection
 open System.Threading.Tasks
 open System.Web
-open ExampleApp.Website.ParentView
 open Microsoft.AspNetCore.Antiforgery
 open Microsoft.AspNetCore.Http
 
@@ -20,6 +19,7 @@ open Falco.Htmx
 open Falco.Security
 
 open Modules.ActiveRecord
+open ExampleApp.Website.ParentView
 
 [<AttributeUsage(AttributeTargets.Property)>]
 type ComponentAttribute() =
@@ -447,7 +447,6 @@ let createFormComponent_PartialView<'T when 'T :> ActiveRecord> token (record: '
             ]
         ])
 
-
 let formComponent_ChildView (partialView: XmlNode) : XmlNode =
     _main [ _classes_ [ Bulma.container; ] ] [
         _section [ ] [
@@ -462,7 +461,9 @@ let pagination_ChildView<'T when 'T :> ActiveRecord>
     (singleView: 'T -> XmlNode)
     : XmlNode =
     
-    let title = getTableName<'T>
+    let title   = getTableName<'T>
+    let baseUrl = getTableName<'T>.ToLowerInvariant()
+    
     _main [ _class_ Bulma.container ] [
         _section [ ] [
             _h1 [ _class_ Bulma.title ] [ _textEnc title ]
@@ -472,6 +473,19 @@ let pagination_ChildView<'T when 'T :> ActiveRecord>
             _div [ _class_ Bulma.container ] [
                 for record in records do
                     singleView record
+            ]
+        ]
+        _section [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
+            _div [ _class_ Bulma.control ] [
+                _button [
+                    _classes_ [ Bulma.button; Bulma.``is-link``; Bulma.``is-success`` ]
+                    Hx.get $"/{baseUrl}/new"
+                    _hxTarget_ "main"
+                    Hx.pushUrlOn
+                    Hx.swapOuterHtml
+                ] [
+                    _textEnc "Create new"
+                ]
             ]
         ]
         // TODO: pagination
@@ -657,7 +671,7 @@ let ``GET /model/new``<'T when 'T :> ActiveRecord and 'T : (new : unit -> 'T)>
 
     let view token =
         if isHtmxRequest ctx then
-            partialView token model 
+            partialView token model |> childView
         else
             partialView token model |> childView |> parentView
     
