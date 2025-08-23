@@ -25,6 +25,11 @@ open Modules.ActiveRecord
 type ComponentAttribute() =
     inherit Attribute()
 
+type ComponentState =
+    | ReadOnly
+    | Initial
+    | ValidationResult of string
+
 let _validationErrorMessageFor (fieldId: string) (errorMessage: string) =
     let successIcon = "✔"
     let successCss  = Bulma.``is-success``
@@ -60,7 +65,7 @@ let _validationErrorMessageFor (fieldId: string) (errorMessage: string) =
 type TextFieldComponentAttribute() =
     inherit ComponentAttribute()
 
-type TextFieldComponentSettings = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
+type TextFieldComponentSettings = { Id: string; Label: string; Name: string; Value: string; State: ComponentState }
 
 let textFieldComponent (settings : TextFieldComponentSettings) : XmlNode  =
     let successIcon = "✔"
@@ -68,12 +73,14 @@ let textFieldComponent (settings : TextFieldComponentSettings) : XmlNode  =
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
 
-    let css, icon =
-        match settings.ErrorMessage = "" with
-        | true -> [successCss], successIcon
-        | false -> [errorCss], errorIcon
-
-    let readOnly = if settings.Readonly then [ _disabled_ ] else []
+    let css, icon, readOnly, errorMessage =
+        match settings.State with
+        | Initial  -> [] , "", [], ""
+        | ReadOnly -> [] , "", [ _disabled_ ], ""
+        | ValidationResult errorMessage ->
+            match errorMessage = "" with 
+            | true -> [successCss], successIcon, [], errorMessage
+            | false -> [errorCss], errorIcon, [], errorMessage
 
     _div [ _classes_ [ Bulma.field ] ] [
         _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ settings.Id ] [ _textEnc settings.Label ]
@@ -97,7 +104,7 @@ let textFieldComponent (settings : TextFieldComponentSettings) : XmlNode  =
             ] [
                 _text icon
             ]
-            _validationErrorMessageFor settings.Id settings.ErrorMessage
+            _validationErrorMessageFor settings.Id errorMessage
         ]
     ]
 
@@ -109,7 +116,7 @@ let textFieldComponent (settings : TextFieldComponentSettings) : XmlNode  =
 type TextAreaComponentAttribute() =
     inherit ComponentAttribute()
 
-type TextAreaComponentSettings = { Id: string; Label: string; Name: string; Value: string; Readonly: bool; ErrorMessage: string }
+type TextAreaComponentSettings = { Id: string; Label: string; Name: string; Value: string; State: ComponentState }
 
 let textAreaComponent (settings : TextAreaComponentSettings) : XmlNode  =
     let successIcon = "✔"
@@ -117,12 +124,14 @@ let textAreaComponent (settings : TextAreaComponentSettings) : XmlNode  =
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
 
-    let css, icon =
-        match settings.ErrorMessage = "" with
-        | true -> [successCss], successIcon
-        | false -> [errorCss], errorIcon
-
-    let readOnly = if settings.Readonly then [ _disabled_ ] else []
+    let css, icon, readOnly, errorMessage =
+        match settings.State with
+        | Initial  -> [] , "", [], ""
+        | ReadOnly -> [] , "", [ _disabled_ ], ""
+        | ValidationResult errorMessage ->
+            match errorMessage = "" with 
+            | true -> [successCss], successIcon, [], errorMessage
+            | false -> [errorCss], errorIcon, [], errorMessage
 
     _div [ _classes_ [ Bulma.field ] ] [
         _label [ _classes_ [ Bulma.label; Bulma.``is-small``]; _for_ settings.Id ] [ _textEnc settings.Label ]
@@ -144,7 +153,7 @@ let textAreaComponent (settings : TextAreaComponentSettings) : XmlNode  =
             ] [
                 _text icon
             ]
-            _validationErrorMessageFor settings.Id settings.ErrorMessage
+            _validationErrorMessageFor settings.Id errorMessage
         ]
     ]
 
@@ -157,7 +166,7 @@ type StaticDropdownComponentAttribute([<ParamArray>] options: string array) =
     inherit ComponentAttribute()
     member _.Options = options
 
-type StaticDropdownSettings = { Id: string; Label: string; Name: string; Value: string; DropdownOptions: string array; Readonly: bool; ErrorMessage: string }
+type StaticDropdownSettings = { Id: string; Label: string; Name: string; Value: string; DropdownOptions: string array; State: ComponentState }
 
 let staticDropdownFieldComponent (settings : StaticDropdownSettings) : XmlNode  =
     let successIcon = "✔"
@@ -165,12 +174,14 @@ let staticDropdownFieldComponent (settings : StaticDropdownSettings) : XmlNode  
     let errorIcon   = "⚠"
     let errorCss    = Bulma.``is-danger``
 
-    let css, icon =
-        match settings.ErrorMessage = "" with
-        | true -> [successCss], successIcon
-        | false -> [errorCss], errorIcon
-
-    let readOnly = if settings.Readonly then [ _disabled_ ] else []
+    let css, icon, readOnly, errorMessage =
+        match settings.State with
+        | Initial  -> [] , "", [], ""
+        | ReadOnly -> [] , "", [ _disabled_ ], ""
+        | ValidationResult errorMessage ->
+            match errorMessage = "" with 
+            | true -> [successCss], successIcon, [], errorMessage
+            | false -> [errorCss], errorIcon, [], errorMessage
     
     let dropdownOptions =
         settings.DropdownOptions
@@ -196,7 +207,7 @@ let staticDropdownFieldComponent (settings : StaticDropdownSettings) : XmlNode  
                 _text icon
             ]
 
-            _validationErrorMessageFor settings.Id settings.ErrorMessage
+            _validationErrorMessageFor settings.Id errorMessage
         ]
     ]
 
@@ -219,10 +230,24 @@ let getRecordFromHttpRequest<'T when 'T :> ActiveRecord> (request: HttpRequest) 
         prop.SetValue(instance, convertedValue)
     instance
 
-let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: PropertyInfo) (isReadonly: bool) (errorMessage: string) = 
+let getFormFieldFromRecord<'T when 'T :> ActiveRecord>
+    (record: 'T)
+    (prop: PropertyInfo)
+    (isReadonly: bool)
+    (isInitial: bool)
+    (errorMessage: string) =
+
     let columnName = prop.GetCustomAttribute<ColumnAttribute>().Name
     let label      = prop.GetCustomAttribute<DisplayNameAttribute>().DisplayName 
     let value      = prop.GetValue(record)
+    
+    let state =
+        if isInitial then
+            ComponentState.Initial
+        elif isReadonly then
+            ComponentState.ReadOnly
+        else
+            ComponentState.ValidationResult errorMessage
     
     match prop.GetCustomAttribute<ComponentAttribute>() with
     | :? TextFieldComponentAttribute ->
@@ -232,8 +257,7 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Name = columnName
                 Label = label
                 Value = value.ToString()
-                Readonly = isReadonly
-                ErrorMessage = errorMessage
+                State = state
             }
     | :? TextAreaComponentAttribute ->
         textAreaComponent
@@ -242,8 +266,7 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Name = columnName
                 Label = label
                 Value = value.ToString()
-                Readonly = isReadonly
-                ErrorMessage = errorMessage
+                State = state
             }
     | :? StaticDropdownComponentAttribute ->
         let options = prop.GetCustomAttribute<StaticDropdownComponentAttribute>().Options
@@ -254,14 +277,17 @@ let getFormFieldFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (prop: Prope
                 Label = label
                 Value = value.ToString()
                 DropdownOptions = options
-                Readonly = isReadonly
-                ErrorMessage = errorMessage
+                State = state
             }
     // TODO: handle other types of components
     // TODO: create unit test that will enforce that the following exception never happens.              
     | _ -> raise (ArgumentException "Invalid ComponentAttribute")
 
-let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly: bool) (validationResults: ValidationResult seq)=
+let getFormFieldsFromRecord<'T when 'T :> ActiveRecord>
+    (record: 'T)
+    (isReadonly: bool)
+    (isInitial: bool)
+    (validationResults: ValidationResult seq)=
     
     let getErrorMessage field =
       let errorMessages = 
@@ -279,7 +305,7 @@ let getFormFieldsFromRecord<'T when 'T :> ActiveRecord> (record: 'T) (isReadonly
         |> Array.filter (fun prop -> prop.GetCustomAttribute<ColumnAttribute>() <> null)
         |> Array.map    (fun prop ->
             let errorMessage = prop.GetCustomAttribute<ColumnAttribute>().Name |> getErrorMessage
-            getFormFieldFromRecord<'T> record prop isReadonly errorMessage
+            getFormFieldFromRecord<'T> record prop isReadonly isInitial errorMessage
         )
         |> Array.toList
 
@@ -293,7 +319,7 @@ let viewFormComponent_PartialView<'T when 'T :> ActiveRecord> (record: 'T) : Xml
     let recordName' = getTableName<'T>
     let recordName  = recordName'.ToLowerInvariant()
     let editUrl     = $"/{recordName}/{record.Id}/edit"
-    let formFields  = getFormFieldsFromRecord<'T> record true []
+    let formFields  = getFormFieldsFromRecord<'T> record true false []
     
     _div [
         _class_ Bulma.box
@@ -338,7 +364,7 @@ let editFormComponent_PartialView<'T when 'T :> ActiveRecord> token (record: 'T)
     let submitUrl   = $"/{recordName}/{record.Id}"
     let cancelUrl   = $"/{recordName}/{record.Id}/view"
     let validations = validateRecord<'T> record
-    let formFields  = getFormFieldsFromRecord<'T> record false validations
+    let formFields  = getFormFieldsFromRecord<'T> record false false validations
 
     
     _form [
@@ -376,10 +402,51 @@ let editFormComponent_PartialView<'T when 'T :> ActiveRecord> token (record: 'T)
                     ]
                 ]
             ]
-            _div [ _id_ $"{recordName}_validation_results" ] [
-                
+        ])
+
+let createFormComponent_PartialView<'T when 'T :> ActiveRecord> token (record: 'T) : XmlNode =
+    let recordName  = getTableName<'T>.ToLowerInvariant()
+    let submitUrl   = $"/{recordName}"
+    let cancelUrl   = $"/{recordName}"
+    let formFields  = getFormFieldsFromRecord<'T> record false true []
+    
+    _form [
+        _class_ Bulma.box
+        Hx.post submitUrl
+        Hx.swapOuterHtml
+        Hx.targetCss ("." + Bulma.box)
+    ] (
+        [
+            _h2 [ _class_ Bulma.title ] [ _textEnc "Create new" ]
+            Xsrf.antiforgeryInput token
+        ]
+        @
+        formFields
+        @
+        [
+            _div [ _classes_ [ Bulma.field; Bulma.``is-grouped``; Bulma.``is-grouped-right`` ] ] [
+                _div [ _class_ Bulma.control ] [
+                    _button [
+                        _classes_ [ Bulma.button; Bulma.``is-link``; Bulma.``is-danger`` ]
+                        Hx.get cancelUrl
+                        _hxTarget_ "main"
+                        Hx.pushUrlOn
+                        Hx.swapOuterHtml
+                    ] [
+                        _textEnc "Cancel"
+                    ]
+                ]
+                _div [ _class_ Bulma.control ] [
+                    _button [
+                        _classes_ [ Bulma.button; Bulma.``is-link``;  Bulma.``is-success`` ]
+                        _typeSubmit_
+                    ] [
+                        _textEnc "Submit"
+                    ]
+                ]
             ]
         ])
+
 
 let formComponent_ChildView (partialView: XmlNode) : XmlNode =
     _main [ _classes_ [ Bulma.container; ] ] [
@@ -573,6 +640,31 @@ let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
     Response.ofHtmlCsrf view ctx    
 
 /// <summary>
+/// This will handle returning the partialView that handles editing a 'T model
+/// </summary>
+/// <param name="ctx">The http context</param>
+/// <param name="partialView">This is the view that will allow you to edit a 'T. It is a partial view, meaning the base XmlNode is a form with a .box css class. Since it's a form, it also requires an antiforgery token.</param>
+/// <param name="childView">This is the view that will show off a `'T`. It is a child view, meaning the base XmlNode must be `main`.</param>
+/// <param name="parentView">This is the base view of your entire website. The base XmlNode must be `html`.</param>
+let ``GET /model/new``<'T when 'T :> ActiveRecord and 'T : (new : unit -> 'T)>
+    (ctx: HttpContext)
+    (partialView: AntiforgeryTokenSet -> 'T -> XmlNode)
+    (childView:  XmlNode -> XmlNode)
+    (parentView: XmlNode -> XmlNode)
+    : Task =
+        
+    let model = new 'T()
+
+    let view token =
+        if isHtmxRequest ctx then
+            partialView token model 
+        else
+            partialView token model |> childView |> parentView
+    
+    Response.ofHtmlCsrf view ctx    
+
+
+/// <summary>
 /// This function will return a list of endpoints that handle CRUD operations for your active record of type `'T` 
 /// </summary>
 /// <param name="viewSinglePaginationItem_PartialView">
@@ -580,7 +672,7 @@ let ``GET /model/id/edit``<'T when 'T :> ActiveRecord>
 /// It is a partial view so the main XmlNode can be whatever you want to list. article, div, li, etc.
 /// </param>
 /// <param name="parentView">This is the base view of your entire website. The base XmlNode must be `html`.</param>
-let getEndpointListForType<'T when 'T :> ActiveRecord>
+let getEndpointListForType<'T when 'T :> ActiveRecord and 'T : (new : unit -> 'T)>
     (viewSinglePaginationItem_PartialView:  'T -> XmlNode )
     (parentView: XmlNode -> XmlNode ) : HttpEndpoint list =
 
@@ -598,6 +690,7 @@ let getEndpointListForType<'T when 'T :> ActiveRecord>
         put   $"/{model}/{{id:int}}"      ( fun ctx -> ``PUT /model/id``<'T>      ctx viewFormComponent_PartialView editFormComponent_PartialView formComponent_ChildView parentView )
         get   $"/{model}/{{id:int}}/view" ( fun ctx -> ``GET /model/id/view``<'T> ctx viewFormComponent_PartialView                               formComponent_ChildView parentView )
         get   $"/{model}/{{id:int}}/edit" ( fun ctx -> ``GET /model/id/edit``<'T> ctx editFormComponent_PartialView                               formComponent_ChildView parentView )
+        get   $"/{model}/new"             ( fun ctx -> ``GET /model/new``<'T>     ctx createFormComponent_PartialView                             formComponent_ChildView parentView ) 
         
         // TODO: add missing GET  /model/new         endpoint
         // TODO: add missing POST /model             endpoint
