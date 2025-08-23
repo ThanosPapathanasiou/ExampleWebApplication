@@ -57,16 +57,20 @@ let parentView (childView: XmlNode) : XmlNode =
                 // TODO: we should actually do this with javascript and save stuff to local storage
                 _hyperScript_
 """
-    on click toggle [@data-theme=dark] on html
-    on click if my textContent is 'Light mode' then set my textContent to 'Dark mode' else set my textContent to 'Light mode'
+    on click
+        if my textContent is 'Light mode'
+            add [@data-theme=light] to html
+            set my textContent to 'Dark mode'
+        else
+            add [@data-theme=dark] to html
+            set my textContent to 'Light mode'
 """ 
-                                        
             ] [
                 _span [ _id_ "dark_mode_text"  ; _class_ Bulma.``ml-1`` ] [ _textEnc "Dark mode" ]
             ]
         ]
 
-    _html [ _id_ "html" ; _lang_ "en"; ] [
+    _html [ _id_ "html" ; _lang_ "en" ] [
         _head [] [
             _title []  [ _textEnc "Example Application" ]
             _meta [ _charset_ "utf-8" ]
@@ -79,7 +83,10 @@ let parentView (childView: XmlNode) : XmlNode =
             _script [ _src_ "https://kit.fontawesome.com/2e85dbb04c.js" ] []
         ]
 
-        _body [ _class_ Bulma.``is-fullheight`` ; _style_ "min-height: 100vh; display: flex; flex-direction: column;" ] [
+        _body [
+            _class_ Bulma.``is-fullheight``
+            _style_ "min-height: 100vh; display: flex; flex-direction: column;"
+        ] [
             _header [ _style_ "padding-bottom: 48px;" ] [
                 _nav [ _classes_ [ Bulma.navbar; Bulma.container ] ; _role_ "navigation"; _ariaLabel_ "main navigation" ] [
                     _div [ _class_  Bulma.``navbar-brand`` ] [
